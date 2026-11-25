@@ -21,7 +21,13 @@ export async function POST(request: NextRequest) {
     if (error) throw error
     return NextResponse.json({ message: 'Your little world is ready.' })
   } catch (error) {
-    console.error('Onboarding save failed:', error instanceof Error ? error.message : 'unknown error')
+    const failure = error as { message?: unknown; code?: unknown; details?: unknown; hint?: unknown }
+    console.error('Onboarding save failed:', {
+      message: typeof failure?.message === 'string' ? failure.message : 'unknown error',
+      code: typeof failure?.code === 'string' ? failure.code : undefined,
+      details: typeof failure?.details === 'string' ? failure.details : undefined,
+      hint: typeof failure?.hint === 'string' ? failure.hint : undefined,
+    })
     return NextResponse.json({ error: 'We could not save that just now. Please try again.' }, { status: 503 })
   }
 }
