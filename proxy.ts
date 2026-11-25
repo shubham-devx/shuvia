@@ -2,16 +2,19 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 const privatePaths = ['/onboarding', '/settings', '/space', '/home', '/notes', '/our-days', '/surprises', '/games', '/memories', '/couple', '/app', '/invite', '/join']
+const noIndexPaths = ['/login', '/signup', '/forgot-password', '/reset-password', '/verify-email', '/connect', '/auth/callback']
 
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname
   const isPrivate = privatePaths.some((path) => pathname === path || pathname.startsWith(`${path}/`))
+  const shouldNoIndex = isPrivate || noIndexPaths.some((path) => pathname === path || pathname.startsWith(`${path}/`))
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   if (!supabaseUrl || !anonKey) {
-    if (isPrivate) return NextResponse.redirect(new URL('/login', request.url))
-    return NextResponse.next()
+    const response = isPrivate ? NextResponse.redirect(new URL('/login', request.url)) : NextResponse.next()
+    if (shouldNoIndex) response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive')
+    return response
   }
 
   let response = NextResponse.next({ request })
@@ -43,9 +46,11 @@ export async function proxy(request: NextRequest) {
       if (!user || redirectPath === '/verify-email' || redirectPath === '/onboarding') target.searchParams.set('next', returnPath)
       const redirectResponse = NextResponse.redirect(target)
       response.cookies.getAll().forEach((cookie) => redirectResponse.cookies.set(cookie))
+      if (shouldNoIndex) redirectResponse.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive')
       return redirectResponse
     }
   }
+  if (shouldNoIndex) response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive')
   return response
 }
 

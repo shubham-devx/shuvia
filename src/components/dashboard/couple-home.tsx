@@ -21,6 +21,7 @@ const nav = [
   { label: 'Notes', href: '/notes', icon: MessageCircle }, { label: 'Memories', href: '/memories', icon: Heart },
   { label: 'Surprises', href: '/surprises', icon: Sparkles }, { label: 'Our Days', href: '/our-days', icon: CalendarDays }, { label: 'Settings', href: '/settings', icon: Settings },
 ]
+const mobileNav = nav.filter(({ href }) => href !== '/settings')
 const questions = [
   'What small thing did your person do that made you feel loved?',
   'If you could relive one ordinary day together, which would you choose?',
@@ -41,7 +42,7 @@ function dateLabel(value: string, options: Intl.DateTimeFormatOptions = { month:
 function daysSince(value: string) { return Math.max(1, Math.floor((Date.now() - new Date(value).getTime()) / 86400000) + 1) }
 
 export function PrivateNav({ active }: { active: string }) {
-  return <><aside className="private-side"><Link href="/home" className="private-wordmark">shuvia<span>®</span></Link><p className="private-nav-label">YOUR LITTLE WORLD</p><nav>{nav.map(({ label, href, icon: Icon }) => <Link key={href} href={href} aria-current={active === href ? 'page' : undefined} className={active === href ? 'private-nav-link is-current' : 'private-nav-link'}><Icon size={17}/>{label}{active === href && <span className="nav-current-dot"/>}</Link>)}</nav><div className="private-side-bottom"><div className="side-quote">“The little things<br/>are the big things.”</div><Link href="/space" className="space-settings"><LockKeyhole size={15}/> Connection settings</Link><LogoutButton/></div></aside><nav className="private-mobile-nav" aria-label="Your Shuvia navigation">{nav.map(({ label, href, icon: Icon }) => <Link key={href} href={href} aria-current={active === href ? 'page' : undefined} className={active === href ? 'mobile-nav-link is-current' : 'mobile-nav-link'}><Icon size={19}/><span>{label}</span></Link>)}</nav></>
+  return <><aside className="private-side"><Link href="/home" className="private-wordmark">shuvia<span>®</span></Link><p className="private-nav-label">YOUR LITTLE WORLD</p><nav>{nav.map(({ label, href, icon: Icon }) => <Link key={href} href={href} aria-current={active === href ? 'page' : undefined} className={active === href ? 'private-nav-link is-current' : 'private-nav-link'}><Icon size={17}/>{label}{active === href && <span className="nav-current-dot"/>}</Link>)}</nav><div className="private-side-bottom"><div className="side-quote">“The little things<br/>are the big things.”</div><Link href="/space" className="space-settings"><LockKeyhole size={15}/> Connection settings</Link><LogoutButton/></div></aside><nav className="private-mobile-nav" aria-label="Your Shuvia navigation">{mobileNav.map(({ label, href, icon: Icon }) => <Link key={href} href={href} aria-current={active === href ? 'page' : undefined} className={active === href ? 'mobile-nav-link is-current' : 'mobile-nav-link'}><Icon size={19}/><span>{label}</span></Link>)}</nav></>
 }
 
 export function CoupleHome({ data, userId }: { data: DashboardData; userId: string }) {
@@ -72,27 +73,27 @@ export function CoupleHome({ data, userId }: { data: DashboardData; userId: stri
         partnerOnlineRef.current = nowOnline
         setPartnerOnline(nowOnline)
       })
-      .on('broadcast', { event: 'partner_joined' }, () => setPartnerJoined(true))
+      .on('broadcast', { event: 'partner_joined' }, () => { if (data.your_notifications_enabled !== false) setPartnerJoined(true) })
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'couple_activity_events', filter: `space_id=eq.${data.space_id}` }, () => {
-        setNewActivity((count) => count + 1)
+        if (data.your_notifications_enabled !== false) setNewActivity((count) => count + 1)
         router.refresh()
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
           setLiveState('live')
-          await channel.track({ user_id: userId, full_name: data.your_name, page: 'home', online_at: new Date().toISOString(), share_online_status: data.your_share_online_status !== false, share_activity: data.your_share_activity !== false })
+          if (data.your_share_online_status !== false) await channel.track({ user_id: userId, full_name: data.your_name, page: 'home', online_at: new Date().toISOString(), share_activity: data.your_share_activity !== false })
           await channel.send({ type: 'broadcast', event: 'partner_joined', payload: { user_id: userId, joined_at: new Date().toISOString() } })
         } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') setLiveState('reconnecting')
         else if (status === 'CLOSED') setLiveState('offline')
       })
     return () => { void supabase.removeChannel(channel) }
-  }, [data.space_id, data.your_name, router, userId])
+  }, [data.space_id, data.your_name, data.your_share_activity, data.your_share_online_status, data.your_notifications_enabled, router, userId])
 
   const together = daysSince(data.connected_at)
   const nextDate = data.dates[0]
   return <div className="private-shell"><PrivateNav active="/home"/><main className="private-main">
-    <header className="private-topbar"><div className="private-breadcrumb"><span>YOUR SPACE</span><span className="crumb-slash">/</span><b>HOME</b></div><div className="private-top-actions"><span className={`live-pill live-${liveState}`}><i/>{liveState === 'live' ? partnerOnline ? `${data.partner_name} is here` : `${data.partner_name} is offline` : liveState === 'reconnecting' ? 'Finding your signal' : liveState === 'offline' ? 'Reconnecting' : 'Opening your space'}</span><button className="notification-button" aria-label="Show recent updates" aria-expanded={notificationOpen} onClick={() => { setNotificationOpen(!notificationOpen); setNewActivity(0) }}><Bell size={18}/>{newActivity > 0 && <i/>}</button><Link href="/settings" className="top-settings" aria-label={`${data.your_name} and ${data.partner_name}, connection settings`}><span style={avatarStyle(data.your_avatar_url)}>{!data.your_avatar_url && initials(data.your_name)}</span><span style={avatarStyle(data.partner_avatar_url)}>{!data.partner_avatar_url && initials(data.partner_name)}</span><span className="top-names">{data.your_name.split(' ')[0]} & {data.partner_name.split(' ')[0]}</span></Link></div>
-      {notificationOpen && <section className="notification-popover"><div className="popover-heading"><strong>Little updates</strong><button aria-label="Close updates" onClick={() => setNotificationOpen(false)}>×</button></div>{data.activity.length ? data.activity.map((item) => <p key={item.id}><i/>{item.summary}<small>{new Date(item.created_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</small></p>) : <div className="notification-empty"><Bell size={20}/><span>No new notes or shared moments yet.</span></div>}</section>}
+    <header className="private-topbar"><div className="private-breadcrumb"><span>YOUR SPACE</span><span className="crumb-slash">/</span><b>HOME</b></div><div className="private-top-actions"><span className={`live-pill live-${liveState}`}><i/>{liveState === 'live' ? partnerOnline ? `${data.partner_name} is here` : `${data.partner_name} is offline` : liveState === 'reconnecting' ? 'Finding your signal' : liveState === 'offline' ? 'Reconnecting' : 'Opening your space'}</span>{data.your_notifications_enabled !== false && <button className="notification-button" aria-label="Show recent updates" aria-expanded={notificationOpen} onClick={() => { setNotificationOpen(!notificationOpen); setNewActivity(0) }}><Bell size={18}/>{newActivity > 0 && <i/>}</button>}<Link href="/settings" className="top-settings" aria-label={`${data.your_name} and ${data.partner_name}, connection settings`}><span style={avatarStyle(data.your_avatar_url)}>{!data.your_avatar_url && initials(data.your_name)}</span><span style={avatarStyle(data.partner_avatar_url)}>{!data.partner_avatar_url && initials(data.partner_name)}</span><span className="top-names">{data.your_name.split(' ')[0]} & {data.partner_name.split(' ')[0]}</span></Link></div>
+      {notificationOpen && data.your_notifications_enabled !== false && <section className="notification-popover"><div className="popover-heading"><strong>Little updates</strong><button aria-label="Close updates" onClick={() => setNotificationOpen(false)}>×</button></div>{data.activity.length ? data.activity.map((item) => <p key={item.id}><i/>{item.summary}<small>{new Date(item.created_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</small></p>) : <div className="notification-empty"><Bell size={20}/><span>No new notes or shared moments yet.</span></div>}</section>}
     </header>
     <div className="home-content">{partnerJoined && <button className="partner-joined-toast" role="status" onClick={() => setPartnerJoined(false)}><span className="peer-presence is-online"/>{data.partner_name} just joined your little world <span>×</span></button>}
       <section className="home-welcome"><div><p className="private-eyebrow"><span/> A SMALL PLACE THAT'S YOURS</p><h1>Good to have you<br/>here, <em>{data.your_name.split(' ')[0]}.</em></h1><p className="welcome-copy">A little corner for you and {data.partner_name.split(' ')[0]} — wherever today finds you.</p><div className="welcome-links"><Link href="/notes" className="home-text-link">Leave a little note <ChevronRight size={15}/></Link><Link href="/space" className="home-text-link">Connection details <ChevronRight size={15}/></Link></div></div><div className="together-card"><div className="together-flower">âœ³</div><p>YOUR SHUVIA STORY</p><strong>{together}</strong><span>{together === 1 ? 'day' : 'days'} in your little world</span><small>Since {new Date(data.connected_at).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</small></div></section>

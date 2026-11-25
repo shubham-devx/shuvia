@@ -19,9 +19,10 @@ async function actor() {
   return {user} as const
 }
 async function room(id:string) { return createSupabaseAdminClient().rpc('get_couple_love_notes',{p_actor_id:id}) }
+async function applyNotificationPreference(userId:string,roomData:unknown){const {data}=await createSupabaseAdminClient().from('user_preferences').select('notifications_enabled').eq('user_id',userId).maybeSingle();if(data?.notifications_enabled===false&&roomData&&typeof roomData==='object')return {...roomData,notifications:[]};return roomData}
 function errorResponse(message:string,code?:string) { return NextResponse.json({error:code==='42501'?'Connect your person before opening this feature.':message},{status:code==='42501'?403:code==='P0002'?404:400}) }
 export async function GET() {
-  try { const auth=await actor(); if('error' in auth)return auth.error; const {data,error}=await room(auth.user.id); if(error)return errorResponse(error.message,error.code); return NextResponse.json({room:data},{headers:{'Cache-Control':'private, no-store'}}) }
+  try { const auth=await actor(); if('error' in auth)return auth.error; const {data,error}=await room(auth.user.id); if(error)return errorResponse(error.message,error.code); return NextResponse.json({room:await applyNotificationPreference(auth.user.id,data)},{headers:{'Cache-Control':'private, no-store'}}) }
   catch { return NextResponse.json({error:'Your letters are taking a moment to open.'},{status:503}) }
 }
 export async function POST(req:NextRequest) {
@@ -40,6 +41,6 @@ export async function POST(req:NextRequest) {
     else mutation=await admin.rpc('mark_shuvia_notification_read',{p_actor_id:auth.user.id,p_notification_id:value.id})
     if(mutation.error)return errorResponse(mutation.error.message,mutation.error.code)
     const {data,error}=await room(auth.user.id); if(error)return errorResponse(error.message,error.code)
-    return NextResponse.json({room:data,result:mutation.data??null},{headers:{'Cache-Control':'private, no-store'}})
+    return NextResponse.json({room:await applyNotificationPreference(auth.user.id,data),result:mutation.data??null},{headers:{'Cache-Control':'private, no-store'}})
   } catch { return NextResponse.json({error:'We could not save that just now. Please try again.'},{status:503}) }
 }

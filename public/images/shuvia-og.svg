@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#fff9f5"/>
+  <path d="M865 0h335v630H810c103-103 160-235 160-363 0-97-36-187-105-267z" fill="#f3e9e4"/>
+  <circle cx="1000" cy="310" r="150" fill="#e9dceb"/>
+  <circle cx="1070" cy="310" r="150" fill="#d98aa8" opacity=".75"/>
+  <path d="M1000 242c-26-48-93-29-82 24 8 37 82 83 82 83s74-46 82-83c11-53-56-72-82-24z" fill="#6b2948" opacity=".88"/>
+  <text x="94" y="134" fill="#6b2948" font-family="Arial,sans-serif" font-size="22" font-weight="700" letter-spacing="5">SHUVIA</text>
+  <path d="M94 164h74" stroke="#d98aa8" stroke-width="2"/>
+  <text x="88" y="286" fill="#6b2948" font-family="Georgia,serif" font-size="78" font-weight="400">Love deserves</text>
+  <text x="88" y="374" fill="#6b2948" font-family="Georgia,serif" font-size="78" font-style="italic">its own little world.</text>
+  <text x="94" y="454" fill="#29212a" font-family="Arial,sans-serif" font-size="24">Two hearts. One little world.</text>
+  <text x="94" y="510" fill="#6b2948" font-family="Arial,sans-serif" font-size="18" letter-spacing="1">A PRIVATE SPACE FOR YOUR KIND OF LOVE</text>
+</svg>

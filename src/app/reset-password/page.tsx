@@ -4,6 +4,9 @@ import { AuthFrame } from '@/components/auth/frame'
 import { ResetPasswordForm } from '@/components/auth/reset-form'
 import { recoveryCookieName, validRecoveryCookie } from '@/lib/auth/recovery-cookie'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { pageMetadata } from '@/lib/seo/metadata'
+
+export const metadata = pageMetadata({ title: 'Choose a new password', description: 'Set a new password for your Shuvia account.', path: '/reset-password', noIndex: true })
 
 export default async function ResetPasswordPage() {
   const jar = await cookies()

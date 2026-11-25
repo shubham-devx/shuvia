@@ -60,7 +60,12 @@ export async function GET() {
     if ('error' in auth) return auth.error
     const { data, error } = await readRoom(auth.user.id)
     if (error) return responseError(error.message, error.code)
-    return NextResponse.json({ room: data })
+    const room = data as GameRoom & { partner_avatar_url?: string | null }
+    if (room.partner_avatar_url && !room.partner_avatar_url.startsWith('http')) {
+      const { data: avatar } = await createSupabaseAdminClient().storage.from('shuvia-avatars').createSignedUrl(room.partner_avatar_url, 3600)
+      room.partner_avatar_url = avatar?.signedUrl ?? null
+    }
+    return NextResponse.json({ room }, { headers: { 'Cache-Control': 'private, no-store' } })
   } catch {
     return NextResponse.json({ error: 'The game service is unavailable right now.' }, { status: 503 })
   }

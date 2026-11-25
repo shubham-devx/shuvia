@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 
 const schema = z.object({
   kind: z.enum(['note', 'date', 'memory', 'game_activity']),
@@ -22,7 +23,16 @@ export async function GET() {
   if (!profile?.onboarding_completed) return NextResponse.json({ error: 'Finish setting up your account first.' }, { status: 403 })
   const { data, error } = await supabase.rpc('get_couple_dashboard')
   if (error) return NextResponse.json({ error: error.message }, { status: 409 })
-  return NextResponse.json({ dashboard: data })
+  const dashboard = data as { your_avatar_url?: string | null; partner_avatar_url?: string | null }
+  const admin = createSupabaseAdminClient()
+  const signed = await Promise.all([dashboard.your_avatar_url, dashboard.partner_avatar_url].map(async (path) => {
+    if (!path || path.startsWith('http')) return path
+    const { data: avatar } = await admin.storage.from('shuvia-avatars').createSignedUrl(path, 3600)
+    return avatar?.signedUrl ?? null
+  }))
+  dashboard.your_avatar_url = signed[0]
+  dashboard.partner_avatar_url = signed[1]
+  return NextResponse.json({ dashboard }, { headers: { 'Cache-Control': 'private, no-store' } })
 }
 
 export async function POST(request: Request) {

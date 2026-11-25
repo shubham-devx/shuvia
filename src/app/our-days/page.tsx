@@ -3,6 +3,7 @@ import { loadCoupleDashboard } from '@/lib/couple/dashboard'
 import '../home/dashboard.css'
 import '../notes/letters.css'
 import '../memories/memories.css'
+import '../device-polish.css'
 
 export const dynamic = 'force-dynamic'
 export default async function OurDaysPage() {

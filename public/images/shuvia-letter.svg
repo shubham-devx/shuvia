@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 700" fill="none">
+  <rect width="900" height="700" fill="#DDD0DF"/>
+  <path d="M0 528C155 480 264 506 410 537C575 572 702 525 900 493V700H0V528Z" fill="#C8B2C7"/>
+  <path d="M85 515L233 380L383 515V653H85V515Z" fill="#F1E3E0"/>
+  <path d="M85 515L233 380L383 515" stroke="#B98E9D" stroke-width="3"/>
+  <path d="M123 529H340M123 548H340M123 567H340" stroke="#DEC9C9" stroke-width="2"/>
+  <g transform="rotate(-5 510 334)">
+    <rect x="332" y="111" width="378" height="464" fill="#A88E9D" opacity=".16"/>
+    <rect x="319" y="96" width="378" height="464" fill="#FFF9F5"/>
+    <rect x="348" y="125" width="320" height="406" stroke="#E8D8D6" stroke-width="1.5"/>
+    <text x="380" y="184" fill="#927085" font-family="Georgia,serif" font-size="16" letter-spacing="3">A NOTE FOR YOU</text>
+    <path d="M380 207H631" stroke="#D8C5C9"/>
+    <text x="380" y="270" fill="#6B2948" font-family="Georgia,serif" font-size="34" font-style="italic">For the ordinary</text>
+    <text x="380" y="310" fill="#6B2948" font-family="Georgia,serif" font-size="34" font-style="italic">days, too.</text>
+    <path d="M380 348H615M380 370H603M380 392H621M380 414H552" stroke="#C7B6BE" stroke-width="2"/>
+    <text x="380" y="474" fill="#9C7186" font-family="Georgia,serif" font-size="18" font-style="italic">Always, your person</text>
+    <rect x="605" y="144" width="38" height="46" fill="#F0E3E8" stroke="#C99BAA"/>
+    <path d="M615 155H633M615 162H633M615 169H628" stroke="#A66D85" stroke-width="2"/>
+  </g>
+  <path d="M733 431C749 378 775 346 813 324M763 388C750 371 737 363 719 359M780 365C778 342 784 324 798 307M747 411C729 403 711 401 693 405" stroke="#8C7285" stroke-width="3" stroke-linecap="round"/>
+  <ellipse cx="714" cy="355" rx="8" ry="17" transform="rotate(-35 714 355)" fill="#B791A2"/>
+  <ellipse cx="798" cy="304" rx="8" ry="17" transform="rotate(24 798 304)" fill="#B791A2"/>
+  <ellipse cx="691" cy="406" rx="8" ry="17" transform="rotate(-71 691 406)" fill="#B791A2"/>
+  <ellipse cx="812" cy="321" rx="8" ry="17" transform="rotate(43 812 321)" fill="#B791A2"/>
+  <rect y="632" width="900" height="68" fill="#624653"/>
+</svg>

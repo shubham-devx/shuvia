@@ -52,6 +52,14 @@ After migrations 1-5, apply `supabase/migrations/202611250006_memories_and_speci
 
 Two-account test: upload a photo and add a title, description, and past date from account A; retrieve it on B and confirm the contributor name/photo render. Edit the text/date, replace and remove the photo, and confirm updates arrive on B. Delete the memory and verify the row and storage object are gone. Add a relationship start date, confirm days together and the anniversary countdown; add birthdays for both members and a recurring custom event, edit and delete entries, then refresh both devices. Try accessing a photo URL as an account from another room and confirm it is denied. Live storage and membership checks require migration 6 and configured Supabase credentials; this workspace has no `.env.local` or Supabase CLI.
 
+## Account settings and application polish
+
+Apply migrations 1-6, then run `supabase/migrations/202611250007_account_settings.sql`. `/settings` lets a verified user update their display name, private avatar, email (with Supabase confirmation), password, onboarding answers, theme, notification/audio preferences, privacy controls, and couple-space links. Email, password, and account deletion actions ask for the current password. Account deletion requires the typed phrase `DELETE MY ACCOUNT`, closes an active couple space, removes its shared database content and stored photos, revokes all sessions, then deletes only the signed-in user's Auth account. Avatars use a private per-user Storage path and one-hour signed display links.
+
+The public policy and terms pages are launch drafts; review them for the jurisdictions where Shuvia operates. `/contact` currently uses the verified sender address configured in `.env.example`. The app includes a manifest and install prompt, offline fallback, network/reconnection status, global error boundary, branded not-found page, and social metadata. The service worker only caches the offline page and icons; it does not cache authenticated page responses.
+
+Local checks: `npm run typecheck`, `npm run lint`, `npm test`, and `npm run build`. To validate live account flows, configure `.env.local`, apply migration 7, then verify avatar upload/removal, email-change confirmation, password change, preferences on a second device, disconnect cleanup, and deletion using two separate registered accounts. This workspace has no Supabase project credentials or CLI, so provider email, storage, and two-account flows cannot be exercised here.
+
 ## Checks
 
 - `npm run typecheck`

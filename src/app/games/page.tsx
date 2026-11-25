@@ -1,6 +1,7 @@
 import { GameRoom } from '@/components/dashboard/game-room'
 import { loadCoupleDashboard } from '@/lib/couple/dashboard'
 import './game.css'
+import '../device-polish.css'
 
 export const dynamic = 'force-dynamic'
 export default async function GamesPage() {

@@ -1,0 +1,129 @@
+/* Phase 8 creative review: type scale, intentional media, and responsive refinements. */
+:root{--text-xs:11px;--text-sm:13px;--text-md:15px;--text-lg:18px}
+body{font-size:15px;line-height:1.55}
+.site-header .nav-link{font-size:13px}
+.nav-cta{min-height:44px;font-size:12px}
+.hero{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.hero-photo{inset:0;background-image:url('/images/shuvia-between.svg');background-size:contain;background-position:center;background-repeat:no-repeat;border-radius:0;filter:none}
+.connect-photo{background-image:url('/images/shuvia-between.svg');background-size:contain;background-position:center;background-repeat:no-repeat;border-radius:0;filter:none}
+.photo-grain{display:none}
+.orbit-two{opacity:.55}
+.hero-body,.manifesto-sub,.preview-text,.ritual-copy>p,.faq-title>p:not(.eyebrow),.faq-answer,.experience p{font-size:var(--text-md);line-height:1.75}
+.hero-foot{font-size:12px;line-height:1.5}
+.hero-foot>span:only-child{border-top:1px solid #d9c5cd;padding-top:13px;max-width:330px}
+.eyebrow{font-size:10px;letter-spacing:.16em}
+.text-link,.underlined-link{font-size:12px}
+.button{min-height:46px;font-size:12px;transition:transform .16s ease,background-color .16s ease,box-shadow .16s ease}
+.button:active,.nav-cta:active,.settings-primary:active,.settings-delete:active{transform:translateY(1px) scale(.99)}
+.button-dark{box-shadow:0 5px 14px #4e1e351b}
+.button-dark:hover{box-shadow:0 8px 19px #4e1e3522}
+.experience h3{font-size:28px}
+.experience p{font-size:13px}
+.experience-icon{width:38px;height:38px}
+.preview-photo{background-image:url('/images/shuvia-letter.svg');filter:none}
+.photo-caption{bottom:17px;left:9%;font-size:18px}
+.feature-list b{font-size:12px}
+.feature-list small{font-size:11px}
+.faq-question{font-size:13px;min-height:56px}
+.faq-answer{font-size:12px}
+.footer-note{font-size:15px}
+.footer-bottom{font-size:10px;gap:18px}
+.site-header a:focus-visible,.footer a:focus-visible,.hero a:focus-visible,.preview a:focus-visible,.faq button:focus-visible,.button:focus-visible{outline:3px solid #9a5572;outline-offset:4px}
+button,a{-webkit-tap-highlight-color:transparent}
+@media(max-width:900px) and (min-width:681px){
+ .hero{grid-template-columns:minmax(0,1.08fr) minmax(280px,.92fr);gap:2%;padding:65px 6% 60px;min-height:540px}
+ .hero h1{font-size:clamp(54px,7.1vw,66px);line-height:.91}
+ .hero-body{font-size:14px}
+ .hero-art{height:360px;min-width:0}
+ .orbit-one{width:360px;height:360px;left:-3px;top:0}
+ .orbit-two{width:390px;height:390px;left:-15px;top:-15px}
+ .postcard{right:-4px;width:135px;height:124px;font-size:15px}
+ .image-caption{font-size:7px;letter-spacing:.12em}
+ .experience h3{font-size:24px}
+ .experience p{font-size:12px}
+}
+@media(max-width:680px){
+ body{font-size:14px}
+ .eyebrow{font-size:9px}
+ .hero{padding-top:50px;padding-bottom:44px}
+ .hero h1{font-size:clamp(56px,14.8vw,76px);line-height:.91}
+ .hero-body{font-size:14px;line-height:1.7}
+ .hero-foot{font-size:12px}
+ .hero-actions{gap:18px;flex-wrap:wrap}
+ .button{font-size:12px;min-height:48px}
+ .text-link{font-size:12px}
+ .hero-art{height:320px;margin-top:10px}
+ .hero-photo{inset:0;background-size:contain}
+ .orbit-two{opacity:.28}
+ .distance-note{font-size:14px}
+ .postcard{font-size:14px}
+ .image-caption{font-size:8px;letter-spacing:.12em}
+ .manifesto-sub,.preview-text,.ritual-copy>p,.faq-title>p:not(.eyebrow),.experience p{font-size:13px;line-height:1.7}
+ .manifesto h2,.section-heading h2,.faq-title h2{font-size:clamp(43px,12vw,50px)}
+ .section-aside{font-size:17px}
+ .experience h3{font-size:25px}
+ .preview-photo{min-height:320px;background-size:cover;background-position:center 44%}
+ .photo-caption{font-size:16px;bottom:14px}
+ .preview-content h2{font-size:clamp(48px,13vw,57px)}
+ .feature-list b{font-size:12px}
+ .feature-list small{font-size:11px}
+ .ritual-copy h2{font-size:clamp(39px,11vw,44px)}
+ .ritual-quote{font-size:35px}
+ .faq-question{font-size:12px;min-height:56px}
+ .faq-answer{font-size:12px;line-height:1.7}
+ .footer-bottom{font-size:10px;gap:12px}
+ .nav-cta{font-size:12px}
+}
+@media(max-width:380px){
+ .hero{padding-left:6%;padding-right:6%}
+ .hero h1{font-size:55px}
+ .hero-art{height:284px}
+ .postcard{width:112px;height:106px;right:1px;bottom:12px;padding:17px 11px;font-size:13px}
+ .hero-foot{max-width:240px}
+ .final-cta h2{font-size:43px}
+}
+@media(prefers-reduced-motion:reduce){.button,.nav-cta,.underlined-link{transition:none!important}}
+
+/* Continue the editorial type scale through settings and private spaces. */
+.auth-card-intro,.auth-bottom,.auth-error,.auth-success{font-size:12px}
+.auth-form label,.remember-control,.terms-control,.field-row a,.auth-inline-link{font-size:11px!important}
+.auth-form input:not([type=checkbox]){font-size:14px;height:46px}
+.password-toggle{height:46px;font-size:11px}
+.verify-panel>p,.settings-heading>p:last-child,.settings-section>div>p:not(.private-eyebrow){font-size:13px;line-height:1.7}
+.settings-section h2{font-size:26px}
+.settings-tabs button{font-size:12px;min-height:44px}
+.settings-form label,.settings-choice-wrap>label{font-size:12px}
+.settings-form input,.settings-choice-wrap select{font-size:14px;height:46px}
+.settings-primary,.settings-delete{font-size:12px;min-height:44px}
+.theme-option b,.settings-choice-list button,.settings-space-links a,.settings-delete-link{font-size:11px}
+.theme-option small,.toggle-copy small{font-size:10px;line-height:1.5}
+.toggle-copy b{font-size:13px}
+.private-nav-link{font-size:12px;min-height:44px}
+.space-settings{font-size:11px;min-height:40px}
+.private-breadcrumb{font-size:9px}
+.live-pill{font-size:10px}
+.private-eyebrow{font-size:9px;line-height:1.4}
+.welcome-copy,.feature-lede{font-size:13px;line-height:1.7}
+.home-text-link,.question-link,.panel-action,.suggestion-cta{font-size:11px;min-height:36px}
+.home-footer{font-size:10px;line-height:1.5}
+.mobile-nav-link{font-size:8.5px;min-width:0;line-height:1.1;min-height:48px}
+.feature-feedback,.private-policy,.feature-partners{font-size:11px;line-height:1.6}
+@media(max-width:800px){
+ .account-settings{padding:30px 20px 52px}
+ .settings-section h2{font-size:25px}
+ .settings-tabs button{font-size:11px}
+ .settings-section>div>p:not(.private-eyebrow){font-size:13px}
+}
+@media(max-width:650px){
+ .private-breadcrumb{font-size:8px}
+ .live-pill{font-size:9px}
+ .welcome-copy{font-size:13px}
+ .home-text-link,.question-link,.panel-action,.suggestion-cta{font-size:11px}
+ .mobile-nav-link{font-size:8px}
+ .home-footer{font-size:10px}
+}
+@media(max-width:380px){.mobile-nav-link{font-size:7.5px}.mobile-nav-link svg{width:17px;height:17px}}
+.settings-tabs button:focus-visible,.settings-space-links a:focus-visible,.settings-form button:focus-visible,.settings-choice-list button:focus-visible,.preference-toggle:focus-within{outline:3px solid #9a5572;outline-offset:3px}
+.settings-primary,.settings-delete,.settings-secondary,.settings-choice-list button,.theme-option{transition:background-color .16s ease,border-color .16s ease,transform .16s ease}
+.settings-primary:hover:not(:disabled){background:#4e1e35}
+.settings-delete:active,.settings-primary:active,.settings-secondary:active,.theme-option:active{transform:translateY(1px)}
