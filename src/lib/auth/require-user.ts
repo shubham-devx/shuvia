@@ -8,7 +8,7 @@ export async function requireShuviaUser() {
   const supabase = await createSupabaseServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
-  if (!user.email_confirmed_at) redirect('/verify-email')
+  if (!user.email_confirmed_at) redirect('/login?error=email-unverified')
   const { data: profile } = await supabase.from('profiles').select('full_name,onboarding_completed').eq('id', user.id).maybeSingle()
   if (!profile?.onboarding_completed) redirect('/onboarding')
   return { user, profile }

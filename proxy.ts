@@ -35,7 +35,7 @@ export async function proxy(request: NextRequest) {
   if (isPrivate) {
     let redirectPath: string | null = null
     if (!user) redirectPath = '/login'
-    else if (!user.email_confirmed_at) redirectPath = '/verify-email'
+    else if (!user.email_confirmed_at) redirectPath = '/login'
     else if (pathname !== '/onboarding') {
       const { data: profile } = await supabase.from('profiles').select('onboarding_completed').eq('id', user.id).maybeSingle()
       if (!profile?.onboarding_completed) redirectPath = '/onboarding'
@@ -43,7 +43,8 @@ export async function proxy(request: NextRequest) {
     if (redirectPath) {
       const target = new URL(redirectPath, request.url)
       const returnPath = `${pathname}${request.nextUrl.search}`
-      if (!user || redirectPath === '/verify-email' || redirectPath === '/onboarding') target.searchParams.set('next', returnPath)
+      if (!user || redirectPath === '/login' || redirectPath === '/onboarding') target.searchParams.set('next', returnPath)
+      if (user && !user.email_confirmed_at) target.searchParams.set('error', 'email-unverified')
       const redirectResponse = NextResponse.redirect(target)
       response.cookies.getAll().forEach((cookie) => redirectResponse.cookies.set(cookie))
       if (shouldNoIndex) redirectResponse.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive')
