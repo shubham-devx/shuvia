@@ -27,6 +27,8 @@ export async function enforceRateLimit(ip: string, bucket: RateLimitBucket) {
     p_max_requests: limit.requests,
     p_window_seconds: limit.window,
   })
-  if (error) throw new Error('Rate limit service is unavailable.')
+  // Preserve Supabase's diagnostic fields so route handlers can log the
+  // actual RPC failure instead of masking it with a generic message.
+  if (error) throw error
   return data === true
 }
