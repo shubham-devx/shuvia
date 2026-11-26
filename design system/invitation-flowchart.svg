@@ -1,0 +1,123 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="11in" height="8.5in" viewBox="0 0 1100 850" role="img" aria-labelledby="title desc">
+  <title id="title">Shuvia invitation and shared space flow</title>
+  <desc id="desc">Printable flowchart showing how a partner opens an invitation link or code, signs in, accepts, and opens a shared space.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,5 L0,10 z" fill="#53716f"/>
+    </marker>
+    <style>
+      text { font-family: Arial, Helvetica, sans-serif; fill: #243746; }
+      .title { font-size: 31px; font-weight: 700; letter-spacing: .2px; }
+      .subtitle { font-size: 16px; fill: #587078; }
+      .label { font-size: 17px; font-weight: 700; }
+      .body { font-size: 14px; fill: #405761; }
+      .small { font-size: 12px; fill: #536c72; }
+      .tiny { font-size: 11px; fill: #647980; }
+      .node { stroke-width: 2; }
+      .line { fill: none; stroke: #53716f; stroke-width: 2.5; marker-end: url(#arrow); }
+      .branch { fill: none; stroke: #819795; stroke-width: 2; marker-end: url(#arrow); }
+      .pill { font-size: 11px; font-weight: 700; letter-spacing: .7px; }
+    </style>
+  </defs>
+  <rect width="1100" height="850" fill="#fbfaf7"/>
+  <rect x="0" y="0" width="1100" height="112" fill="#f1f5f2"/>
+  <circle cx="67" cy="57" r="25" fill="#deebe4"/>
+  <path d="M55 57c5-10 15-10 21 0-6 10-16 10-21 0z" fill="none" stroke="#387567" stroke-width="2.5"/>
+  <text x="110" y="53" class="title">Invitation to shared space</text>
+  <text x="111" y="80" class="subtitle">Shuvia | Link or code -> sign in -> accept -> make memories together</text>
+  <text x="1055" y="43" text-anchor="end" class="pill" fill="#387567">PRINT-FRIENDLY FLOW</text>
+  <text x="1055" y="67" text-anchor="end" class="small">Updated 26 Nov 2026</text>
+
+  <!-- Main flow arrows, drawn behind the nodes. -->
+  <path class="line" d="M205 226 H258"/>
+  <path class="line" d="M342 204 H422"/>
+  <text x="376" y="190" class="tiny">YES</text>
+  <path class="branch" d="M300 258 V319"/>
+  <text x="312" y="291" class="tiny">NO</text>
+  <path class="line" d="M447 365 H487"/>
+  <path class="branch" d="M600 321 V284 H530 V250"/>
+  <text x="610" y="306" class="tiny">RETURN TO INVITE</text>
+  <path class="line" d="M637 206 H686"/>
+  <path class="line" d="M817 206 H873"/>
+  <text x="841" y="191" class="tiny">PENDING</text>
+  <path class="line" d="M950 250 V321"/>
+  <path class="line" d="M950 414 V476"/>
+  <path class="branch" d="M752 260 H735 V430 H545 V445"/>
+  <path class="branch" d="M817 206 H835 V430 H757 V445"/>
+
+  <!-- Entry and identity gate -->
+  <rect x="42" y="181" width="163" height="90" rx="15" fill="#e8f1ec" stroke="#6f9c89" class="node"/>
+  <text x="123.5" y="210" text-anchor="middle" class="pill" fill="#387567">START</text>
+  <text x="123.5" y="236" text-anchor="middle" class="label">Open invite link</text>
+  <text x="123.5" y="256" text-anchor="middle" class="body">or enter the code</text>
+
+  <path d="M300 150 L369 204 L300 258 L231 204 Z" fill="#fff2dc" stroke="#d1a35b" class="node"/>
+  <text x="300" y="199" text-anchor="middle" class="label">Signed in?</text>
+  <text x="300" y="220" text-anchor="middle" class="small">Use your own account</text>
+
+  <rect x="422" y="162" width="215" height="88" rx="15" fill="#edf2f4" stroke="#8099a2" class="node"/>
+  <text x="529.5" y="190" text-anchor="middle" class="pill" fill="#587078">INVITATION PREVIEW</text>
+  <text x="529.5" y="217" text-anchor="middle" class="label">Check who sent it</text>
+  <text x="529.5" y="237" text-anchor="middle" class="body">and whether it is active</text>
+
+  <path d="M752 151 L817 206 L752 261 L687 206 Z" fill="#fff2dc" stroke="#d1a35b" class="node"/>
+  <text x="752" y="201" text-anchor="middle" class="label">Invite status?</text>
+  <text x="752" y="220" text-anchor="middle" class="small">Choose the path</text>
+
+  <rect x="873" y="162" width="155" height="88" rx="15" fill="#fff2dc" stroke="#d1a35b" class="node"/>
+  <text x="950.5" y="190" text-anchor="middle" class="pill" fill="#a87835">PARTNER CONSENT</text>
+  <text x="950.5" y="217" text-anchor="middle" class="label">Review and accept</text>
+  <text x="950.5" y="237" text-anchor="middle" class="body">the invitation</text>
+
+  <!-- Login continuation -->
+  <rect x="206" y="321" width="241" height="88" rx="15" fill="#edf2f4" stroke="#8099a2" class="node"/>
+  <text x="326.5" y="350" text-anchor="middle" class="pill" fill="#587078">LOGIN / SIGN-UP</text>
+  <text x="326.5" y="378" text-anchor="middle" class="label">Log in or create an account</text>
+  <text x="326.5" y="398" text-anchor="middle" class="body">If needed, verify email first</text>
+
+  <rect x="487" y="321" width="226" height="88" rx="15" fill="#edf2f4" stroke="#8099a2" class="node"/>
+  <text x="600" y="350" text-anchor="middle" class="pill" fill="#587078">ACCOUNT READY</text>
+  <text x="600" y="378" text-anchor="middle" class="label">Finish onboarding</text>
+  <text x="600" y="398" text-anchor="middle" class="body">Then return to the invite</text>
+
+  <!-- Status branches -->
+  <rect x="430" y="445" width="230" height="91" rx="15" fill="#e8f1ec" stroke="#6f9c89" class="node"/>
+  <text x="545" y="473" text-anchor="middle" class="pill" fill="#387567">SELF: SAME ACCOUNT</text>
+  <text x="545" y="498" text-anchor="middle" class="label">Switch to partner account</text>
+  <text x="545" y="520" text-anchor="middle" class="body">or ask sender to share their invite</text>
+
+  <rect x="680" y="445" width="160" height="93" rx="15" fill="#faece7" stroke="#cf8a72" class="node"/>
+  <text x="760" y="474" text-anchor="middle" class="pill" fill="#aa6049">NOT AVAILABLE</text>
+  <text x="760" y="499" text-anchor="middle" class="label" style="font-size:14px">Invite expired or used</text>
+  <text x="760" y="520" text-anchor="middle" class="small">Ask sender for a fresh invite</text>
+  <text x="760" y="536" text-anchor="middle" class="tiny">Already connected? Open space.</text>
+
+  <!-- Connected destination -->
+  <rect x="850" y="321" width="200" height="93" rx="15" fill="#e5f2eb" stroke="#5d987e" class="node"/>
+  <text x="950" y="350" text-anchor="middle" class="pill" fill="#387567">CONNECTED</text>
+  <text x="950" y="378" text-anchor="middle" class="label">Both members active</text>
+  <text x="950" y="398" text-anchor="middle" class="body">Shared space is open</text>
+
+  <rect x="850" y="476" width="200" height="104" rx="18" fill="#1f6659" stroke="#1f6659" class="node"/>
+  <text x="950" y="508" text-anchor="middle" class="pill" fill="#d8eee4">TOGETHER</text>
+  <text x="950" y="536" text-anchor="middle" class="label" style="fill:#ffffff">Explore your space</text>
+  <text x="950" y="559" text-anchor="middle" class="body" style="fill:#edf8f3">Add memories, notes, dates</text>
+
+  <text x="42" y="604" class="small">Login returns to the invitation; the invited partner must accept before shared features open.</text>
+
+  <!-- Troubleshooting strip -->
+  <rect x="42" y="632" width="1016" height="140" rx="18" fill="#f4f0e8" stroke="#dfd2bb" stroke-width="1.5"/>
+  <text x="66" y="665" class="pill" fill="#8c7046">LOG GUIDE</text>
+  <line x1="550" y1="682" x2="550" y2="746" stroke="#d9cbb2" stroke-width="1.5"/>
+  <circle cx="84" cy="710" r="17" fill="#fff2dc"/>
+  <text x="84" y="716" text-anchor="middle" class="pill" fill="#a87835">P</text>
+  <text x="115" y="704" class="label">P0002 - dashboard opened before connection</text>
+  <text x="115" y="728" class="body">Return to the invitation, accept it, then open the shared home.</text>
+  <circle cx="588" cy="710" r="17" fill="#faece7"/>
+  <text x="588" y="716" text-anchor="middle" class="pill" fill="#aa6049">!</text>
+  <text x="620" y="704" class="label">42702 - old ambiguous SQL reference</text>
+  <text x="620" y="728" class="body">The preview function fix is applied in the live database.</text>
+
+  <text x="42" y="814" class="small">Private by design: each partner uses their own account and gives consent before sharing.</text>
+  <text x="1058" y="814" text-anchor="end" class="tiny">SHUVIA | INVITATION FLOW</text>
+</svg>
