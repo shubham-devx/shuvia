@@ -6,11 +6,25 @@ import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import { requireShuviaUser } from '@/lib/auth/require-user'
 import type { DashboardData } from '@/components/dashboard/couple-home'
 
-export async function loadCoupleDashboard(): Promise<{ dashboard: DashboardData; userId: string }> {
-  const { user } = await requireShuviaUser()
+type CoupleSpaceStatus = { state: string; partner_name?: string | null; is_owner?: boolean } | null
+type ConnectedDashboard = { dashboard: DashboardData; userId: string }
+type HomeDashboard = { dashboard: DashboardData | null; userId: string; name: string; space: CoupleSpaceStatus; loadError: boolean }
+
+export function loadCoupleDashboard(): Promise<ConnectedDashboard>
+export function loadCoupleDashboard(options: { allowUnconnected: true }): Promise<HomeDashboard>
+export async function loadCoupleDashboard(options?: { allowUnconnected?: boolean }): Promise<ConnectedDashboard | HomeDashboard> {
+  const { user, profile } = await requireShuviaUser()
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase.rpc('get_couple_dashboard')
-  if (error || !data) redirect('/space')
+  if (error || !data) {
+    if (!options?.allowUnconnected) redirect('/space')
+    if (error && error.code !== 'P0002') return { dashboard: null, userId: user.id, name: profile.full_name, space: null, loadError: true }
+    const { data: spaceData, error: spaceError } = await supabase.rpc('get_my_couple_space')
+    if (spaceError) return { dashboard: null, userId: user.id, name: profile.full_name, space: null, loadError: true }
+    const space = Array.isArray(spaceData) ? spaceData[0] ?? null : spaceData
+    if ((space as CoupleSpaceStatus)?.state === 'connected') return { dashboard: null, userId: user.id, name: profile.full_name, space: space as CoupleSpaceStatus, loadError: true }
+    return { dashboard: null, userId: user.id, name: profile.full_name, space: space as CoupleSpaceStatus, loadError: false }
+  }
   const dashboard = data as DashboardData
   const admin = createSupabaseAdminClient()
   const [{ data: preferences }, { data: members }] = await Promise.all([

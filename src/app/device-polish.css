@@ -1,9 +1,5 @@
 /* Device and contrast pass: keep the warm palette, make the words easier to read. */
-:root {
-  --muted: #5f5359;
-  --muted-strong: #51464d;
-  --rose-ink: #88465f;
-}
+:root { --muted-strong: var(--text-secondary); --rose-ink: var(--primary); }
 
 html { scroll-padding-top: 86px; }
 body { overflow-x: clip; color: #29212a; }

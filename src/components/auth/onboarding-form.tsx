@@ -43,7 +43,7 @@ export function OnboardingForm({ initial, nextRoute }: Props) {
       const response = await fetch('/api/auth/onboarding', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(values) })
       const result: { error?: string } = await response.json()
       if (!response.ok) throw new Error(result.error ?? 'We could not save that just now. Please try again.')
-      router.replace(safeInternalPath(nextRoute, '/space')); router.refresh()
+      router.replace(safeInternalPath(nextRoute, '/home'))
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'We could not save that just now.') }
     finally { setBusy(false) }
   }

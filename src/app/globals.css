@@ -1,4 +1,5 @@
 @import '../styles.css';
+@import './design-tokens.css';
 @import './couple.css';
 @import './creative-review.css';
 @import './device-polish.css';

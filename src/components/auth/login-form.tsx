@@ -23,8 +23,8 @@ export function LoginForm() {
       const { error } = await supabase.auth.signInWithPassword({ email: parsed.data.email, password: parsed.data.password })
       if (error) throw error
       setRememberMePreference(parsed.data.rememberMe)
-      router.replace(safeInternalPath(params.get('next'), '/home'))
-      router.refresh()
+      const destination = safeInternalPath(params.get('next'), '/home')
+      router.replace(destination === '/space' ? '/home' : destination)
     } catch (error) {
       setMessage(error instanceof Error && /not confirmed|confirm/i.test(error.message) ? 'Please verify your email before logging in. You can request a fresh link below.' : 'That email and password did not match. Please try again.')
     } finally { setBusy(false) }

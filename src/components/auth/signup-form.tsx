@@ -42,8 +42,8 @@ export function SignupForm() {
       })
       if (error) throw error
       setRememberMePreference(true)
-      if (data.session) { router.replace(nextRoute); router.refresh(); return }
-      router.replace(`/verify-email?email=${encodeURIComponent(parsed.data.email)}&sent=1`)
+      if (data.session) { router.replace(nextRoute); return }
+      router.replace(`/verify-email?email=${encodeURIComponent(parsed.data.email)}&sent=1&next=${encodeURIComponent(nextRoute)}`)
     } catch (error) {
       setMessage({ kind: 'error', text: error instanceof Error && error.name !== 'ZodError' ? error.message : 'Account setup is not connected yet. Please try again later.' })
     } finally { setBusy(false) }

@@ -3,6 +3,7 @@ import { AppShell } from '@/components/app/app-shell'
 import { defaultDescription, defaultTitle, siteName, siteUrl, socialImage } from '@/lib/seo/metadata'
 import './globals.css'
 import './polish.css'
+import './redesign.css'
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -20,5 +21,5 @@ export const metadata: Metadata = {
 export const viewport: Viewport = { themeColor: '#6b2948', width: 'device-width', initialScale: 1 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return <html lang="en"><head><link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous"/><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/></head><body><AppShell>{children}</AppShell></body></html>
+  return <html lang="en" data-scroll-behavior="smooth"><head><link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous"/><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet"/></head><body><AppShell>{children}</AppShell></body></html>
 }

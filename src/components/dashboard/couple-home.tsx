@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type FormEvent } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Bell, CalendarDays, ChevronRight, Clock3, Gamepad2, Heart, Home, ImagePlus, LoaderCircle, LockKeyhole, MessageCircle, Plus, Settings, Sparkles, Wifi } from 'lucide-react'
 import { createSupabaseBrowserClient } from '@/lib/supabase/client'
 import { LogoutButton } from '@/components/auth/logout-button'
+import { LocalizedTime } from '@/components/app/localized-time'
 
 export type DashboardData = {
   space_id: string; your_name: string; your_avatar_url: string | null; partner_name: string; partner_avatar_url: string | null; connected_at: string
@@ -22,6 +23,13 @@ const nav = [
   { label: 'Surprises', href: '/surprises', icon: Sparkles }, { label: 'Our Days', href: '/our-days', icon: CalendarDays }, { label: 'Settings', href: '/settings', icon: Settings },
 ]
 const mobileNav = nav.filter(({ href }) => href !== '/settings')
+let clientNow = 0
+function subscribeToClock(callback: () => void) {
+  const timer = window.setTimeout(() => { clientNow = Date.now(); callback() }, 0)
+  return () => window.clearTimeout(timer)
+}
+function getClockSnapshot() { return clientNow }
+function getServerClockSnapshot() { return 0 }
 const questions = [
   'What small thing did your person do that made you feel loved?',
   'If you could relive one ordinary day together, which would you choose?',
@@ -32,14 +40,14 @@ const questions = [
   'If tonight had a soundtrack, what would the first song be?',
 ]
 
-function dailyQuestion() {
-  const day = Math.floor(Date.now() / 86400000)
+function dailyQuestion(now: number) {
+  const day = Math.floor(now / 86400000)
   return questions[((day % questions.length) + questions.length) % questions.length]
 }
 function initials(name: string) { return name.split(/\s+/).map((part) => part[0]).slice(0, 2).join('').toUpperCase() }
 function avatarStyle(url: string | null) { return url ? { backgroundImage: `url(${JSON.stringify(url)})` } : undefined }
-function dateLabel(value: string, options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' }) { return new Date(`${value.slice(0, 10)}T12:00:00`).toLocaleDateString(undefined, options) }
-function daysSince(value: string) { return Math.max(1, Math.floor((Date.now() - new Date(value).getTime()) / 86400000) + 1) }
+function dateLabel(value: string, options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' }) { return new Date(`${value.slice(0, 10)}T12:00:00Z`).toLocaleDateString('en-US', { ...options, timeZone: 'UTC' }) }
+function daysSince(value: string, now: number) { return Math.max(1, Math.floor((now - new Date(value).getTime()) / 86400000) + 1) }
 
 export function PrivateNav({ active }: { active: string }) {
   return <><aside className="private-side"><Link href="/home" className="private-wordmark">shuvia<span>®</span></Link><p className="private-nav-label">YOUR LITTLE WORLD</p><nav>{nav.map(({ label, href, icon: Icon }) => <Link key={href} href={href} aria-current={active === href ? 'page' : undefined} className={active === href ? 'private-nav-link is-current' : 'private-nav-link'}><Icon size={17}/>{label}{active === href && <span className="nav-current-dot"/>}</Link>)}</nav><div className="private-side-bottom"><div className="side-quote">“The little things<br/>are the big things.”</div><Link href="/space" className="space-settings"><LockKeyhole size={15}/> Connection settings</Link><LogoutButton/></div></aside><nav className="private-mobile-nav" aria-label="Your Shuvia navigation">{mobileNav.map(({ label, href, icon: Icon }) => <Link key={href} href={href} aria-current={active === href ? 'page' : undefined} className={active === href ? 'mobile-nav-link is-current' : 'mobile-nav-link'}><Icon size={19}/><span>{label}</span></Link>)}</nav></>
@@ -54,7 +62,8 @@ export function CoupleHome({ data, userId }: { data: DashboardData; userId: stri
   const [notificationOpen, setNotificationOpen] = useState(false)
   const [newActivity, setNewActivity] = useState(0)
   const [partnerJoined, setPartnerJoined] = useState(false)
-  const question = useMemo(() => dailyQuestion(), [])
+  const now = useSyncExternalStore(subscribeToClock, getClockSnapshot, getServerClockSnapshot)
+  const question = useMemo(() => dailyQuestion(now), [now])
 
   useEffect(() => {
     const supabase = createSupabaseBrowserClient()
@@ -89,19 +98,19 @@ export function CoupleHome({ data, userId }: { data: DashboardData; userId: stri
     return () => { void supabase.removeChannel(channel) }
   }, [data.space_id, data.your_name, data.your_share_activity, data.your_share_online_status, data.your_notifications_enabled, router, userId])
 
-  const together = daysSince(data.connected_at)
+  const together = now ? daysSince(data.connected_at, now) : null
   const nextDate = data.dates[0]
   return <div className="private-shell"><PrivateNav active="/home"/><main className="private-main">
     <header className="private-topbar"><div className="private-breadcrumb"><span>YOUR SPACE</span><span className="crumb-slash">/</span><b>HOME</b></div><div className="private-top-actions"><span className={`live-pill live-${liveState}`}><i/>{liveState === 'live' ? partnerOnline ? `${data.partner_name} is here` : `${data.partner_name} is offline` : liveState === 'reconnecting' ? 'Finding your signal' : liveState === 'offline' ? 'Reconnecting' : 'Opening your space'}</span>{data.your_notifications_enabled !== false && <button className="notification-button" aria-label="Show recent updates" aria-expanded={notificationOpen} onClick={() => { setNotificationOpen(!notificationOpen); setNewActivity(0) }}><Bell size={18}/>{newActivity > 0 && <i/>}</button>}<Link href="/settings" className="top-settings" aria-label={`${data.your_name} and ${data.partner_name}, connection settings`}><span style={avatarStyle(data.your_avatar_url)}>{!data.your_avatar_url && initials(data.your_name)}</span><span style={avatarStyle(data.partner_avatar_url)}>{!data.partner_avatar_url && initials(data.partner_name)}</span><span className="top-names">{data.your_name.split(' ')[0]} & {data.partner_name.split(' ')[0]}</span></Link></div>
       {notificationOpen && data.your_notifications_enabled !== false && <section className="notification-popover"><div className="popover-heading"><strong>Little updates</strong><button aria-label="Close updates" onClick={() => setNotificationOpen(false)}>×</button></div>{data.activity.length ? data.activity.map((item) => <p key={item.id}><i/>{item.summary}<small>{new Date(item.created_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</small></p>) : <div className="notification-empty"><Bell size={20}/><span>No new notes or shared moments yet.</span></div>}</section>}
     </header>
     <div className="home-content">{partnerJoined && <button className="partner-joined-toast" role="status" onClick={() => setPartnerJoined(false)}><span className="peer-presence is-online"/>{data.partner_name} just joined your little world <span>×</span></button>}
-      <section className="home-welcome"><div><p className="private-eyebrow"><span/> A SMALL PLACE THAT'S YOURS</p><h1>Good to have you<br/>here, <em>{data.your_name.split(' ')[0]}.</em></h1><p className="welcome-copy">A little corner for you and {data.partner_name.split(' ')[0]} — wherever today finds you.</p><div className="welcome-links"><Link href="/notes" className="home-text-link">Leave a little note <ChevronRight size={15}/></Link><Link href="/space" className="home-text-link">Connection details <ChevronRight size={15}/></Link></div></div><div className="together-card"><div className="together-flower">âœ³</div><p>YOUR SHUVIA STORY</p><strong>{together}</strong><span>{together === 1 ? 'day' : 'days'} in your little world</span><small>Since {new Date(data.connected_at).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</small></div></section>
+      <section className="home-welcome"><div><p className="private-eyebrow"><span/> A SMALL PLACE THAT'S YOURS</p><h1>Good to have you<br/>here, <em>{data.your_name.split(' ')[0]}.</em></h1><p className="welcome-copy">A little corner for you and {data.partner_name.split(' ')[0]} — wherever today finds you.</p><div className="welcome-links"><Link href="/notes" className="home-text-link">Leave a little note <ChevronRight size={15}/></Link><Link href="/space" className="home-text-link">Connection details <ChevronRight size={15}/></Link></div></div><div className="together-card"><div className="together-flower">âœ³</div><p>YOUR SHUVIA STORY</p><strong>{together ?? '—'}</strong><span>{together === null ? 'days in your little world' : together === 1 ? 'day in your little world' : 'days in your little world'}</span><small>Since {<LocalizedTime value={data.connected_at} options={{ month: 'long', year: 'numeric' }}/>}</small></div></section>
 
-      <section className="home-question"><div className="question-copy"><p className="private-eyebrow">TODAY, BETWEEN THE TWO OF YOU <span>· {dateLabel(new Date().toISOString())}</span></p><h2>{question}</h2><Link href="/games" className="question-link">Take it to your games <ChevronRight size={15}/></Link></div><div className="question-response"><span className="question-art">“</span><p>Some questions make the miles feel a little smaller.</p><Link href="/games" className="button button-dark">Start together <ChevronRight size={15}/></Link></div></section>
+      <section className="home-question"><div className="question-copy"><p className="private-eyebrow">TODAY, BETWEEN THE TWO OF YOU <span>· {(now ? dateLabel(new Date(now).toISOString()) : '—')}</span></p><h2>{question}</h2><Link href="/games" className="question-link">Take it to your games <ChevronRight size={15}/></Link></div><div className="question-response"><span className="question-art">“</span><p>Some questions make the miles feel a little smaller.</p><Link href="/games" className="button button-dark">Start together <ChevronRight size={15}/></Link></div></section>
 
       <div className="home-grid home-grid-main"><section className="home-panel play-panel"><div className="panel-top"><div><p className="private-eyebrow">PICK UP WHERE YOU LEFT OFF</p><h2>{partnerPlaying ? 'Your person is playing.' : 'A little time to play?'}</h2></div><Gamepad2 size={19}/></div><p>{partnerPlaying ? `${data.partner_name.split(' ')[0]} has a question open in your shared room. Join in whenever you’re ready.` : 'No shared game is in progress yet. Pick a question, a dare, or a virtual date and make a new little ritual.'}</p><Link href="/games" className="panel-action">{partnerPlaying ? 'Join their round' : 'Find something to play'} <ChevronRight size={15}/></Link></section>
-      <section className="home-panel note-panel"><div className="panel-top"><div><p className="private-eyebrow">WORDS TO KEEP CLOSE</p><h2>Recent love notes</h2></div><MessageCircle size={18}/></div>{data.notes.length ? <div className="recent-notes">{data.notes.map((note) => <article key={note.id}><p>“{note.body}”</p><small>{note.author_name} <span>·</span> {new Date(note.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</small></article>)}</div> : <div className="mini-empty"><span className="empty-illustration note-empty-art"><MessageCircle size={19}/></span><p>A blank page for something kind.</p><Link href="/notes">Write the first note <ChevronRight size={14}/></Link></div>}<Link className="panel-arrow" href="/notes" aria-label="Open all love notes"><ChevronRight size={18}/></Link></section></div>
+      <section className="home-panel note-panel"><div className="panel-top"><div><p className="private-eyebrow">WORDS TO KEEP CLOSE</p><h2>Recent love notes</h2></div><MessageCircle size={18}/></div>{data.notes.length ? <div className="recent-notes">{data.notes.map((note) => <article key={note.id}><p>“{note.body}”</p><small>{note.author_name} <span>·</span> {<LocalizedTime value={note.created_at} options={{ month: 'short', day: 'numeric' }}/>}</small></article>)}</div> : <div className="mini-empty"><span className="empty-illustration note-empty-art"><MessageCircle size={19}/></span><p>A blank page for something kind.</p><Link href="/notes">Write the first note <ChevronRight size={14}/></Link></div>}<Link className="panel-arrow" href="/notes" aria-label="Open all love notes"><ChevronRight size={18}/></Link></section></div>
 
       <div className="home-grid home-grid-lower"><section className="home-panel dates-panel"><div className="panel-top"><div><p className="private-eyebrow">SOMETHING TO LOOK FORWARD TO</p><h2>Our days</h2></div><CalendarDays size={18}/></div>{nextDate ? <div className="upcoming-date"><div className="date-tile"><b>{dateLabel(nextDate.occurs_on, { day: '2-digit' })}</b><span>{dateLabel(nextDate.occurs_on, { month: 'short' })}</span></div><div><strong>{nextDate.title}</strong><small>{dateLabel(nextDate.occurs_on, { weekday: 'long', month: 'long', day: 'numeric' })}</small></div></div> : <div className="mini-empty inline-empty"><span className="empty-illustration date-empty-art"><Clock3 size={18}/></span><p>No special dates yet.</p></div>}<Link className="panel-action" href="/our-days"><Plus size={14}/> Add a day to look forward to</Link></section>
       <section className="home-panel memory-panel"><div className="panel-top"><div><p className="private-eyebrow">THE LITTLE THINGS, KEPT</p><h2>Shared memories</h2></div><Heart size={18}/></div>{data.memories.length ? <div className="memory-list">{data.memories.map((memory) => <article key={memory.id}><span className="memory-marker"/><div><p>{memory.caption}</p><small>{memory.author_name} <span>·</span> {dateLabel(memory.remembered_on)}</small></div></article>)}</div> : <div className="mini-empty inline-empty"><span className="empty-illustration memory-empty-art"><ImagePlus size={18}/></span><p>Your first memory can be a sentence.</p></div>}<Link className="panel-action" href="/memories">{data.memories.length ? 'Visit your memory shelf' : 'Keep a first memory'} <ChevronRight size={14}/></Link></section></div>

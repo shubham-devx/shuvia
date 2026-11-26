@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function OnboardingPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
   const query = await searchParams
-  const nextRoute = safeInternalPath(query.next ?? null, '/space')
+  const nextRoute = safeInternalPath(query.next ?? null, '/home')
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) redirect('/login')
   const supabase = await createSupabaseServerClient()
   const { data: { user } } = await supabase.auth.getUser()
