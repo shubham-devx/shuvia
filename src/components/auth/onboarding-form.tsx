@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowRight, Check } from 'lucide-react'
 import { activityOptions, discoveryOptions, expectationOptions, relationshipOptions, type OnboardingData } from '@/lib/auth/schemas'
 import { safeInternalPath } from '@/lib/auth/redirect'
 import { AuthMessage } from './frame'
+import { ShuviaLogo } from '@/components/brand/shuvia-logo'
 
 const steps = [
   { title: 'What do you hope to find here?', hint: 'Choose every little thing that feels right.', options: expectationOptions, field: 'expectations', multiple: true },
@@ -48,7 +49,7 @@ export function OnboardingForm({ initial, nextRoute }: Props) {
     finally { setBusy(false) }
   }
 
-  return <div className="onboarding-wrap"><div className="onboarding-top"><span className="auth-logo">shuvia<span>®</span></span><button className="onboarding-skip" disabled={busy} onClick={() => finish({ expectations: [], relationshipType: null, interestedActivities: [], discoverySource: null })}>Skip for now</button></div>
+  return <div className="onboarding-wrap"><div className="onboarding-top"><ShuviaLogo className="auth-logo"/><button className="onboarding-skip" disabled={busy} onClick={() => finish({ expectations: [], relationshipType: null, interestedActivities: [], discoverySource: null })}>Skip for now</button></div>
     <div className="progress-meta"><span>GETTING TO KNOW YOU</span><span>{step + 1} OF {steps.length}</span></div><div className="progress-track" role="progressbar" aria-valuemin={1} aria-valuemax={4} aria-valuenow={step + 1}><div className="progress-fill" style={{ width: `${((step + 1) / steps.length) * 100}%` }}/></div>
     <section className="onboarding-step" aria-labelledby="onboarding-title"><p className="eyebrow">A LITTLE ABOUT YOUR US</p><h1 id="onboarding-title">{current.title}</h1><p>{current.hint}</p>{error && <AuthMessage kind="error">{error}</AuthMessage>}
       <div className="choice-grid">{current.options.map((option) => {

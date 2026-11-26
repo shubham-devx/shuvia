@@ -3,10 +3,10 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type FormEvent } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Bell, CalendarDays, ChevronRight, Clock3, Gamepad2, Heart, Home, ImagePlus, LoaderCircle, LockKeyhole, MessageCircle, Plus, Settings, Sparkles, Wifi } from 'lucide-react'
+import { Bell, CalendarDays, Check, ChevronRight, Clock3, Copy, Gamepad2, Heart, Home, ImagePlus, Link2, LoaderCircle, LockKeyhole, Menu, MessageCircle, Plus, Share2, Sparkles, UserRound, Wifi, X } from 'lucide-react'
 import { createSupabaseBrowserClient } from '@/lib/supabase/client'
-import { LogoutButton } from '@/components/auth/logout-button'
 import { LocalizedTime } from '@/components/app/localized-time'
+import { ShuviaLogo } from '@/components/brand/shuvia-logo'
 
 export type DashboardData = {
   space_id: string; your_name: string; your_avatar_url: string | null; partner_name: string; partner_avatar_url: string | null; connected_at: string
@@ -18,11 +18,11 @@ export type DashboardData = {
 }
 
 const nav = [
-  { label: 'Home', href: '/home', icon: Home }, { label: 'Play', href: '/games', icon: Gamepad2 },
-  { label: 'Notes', href: '/notes', icon: MessageCircle }, { label: 'Memories', href: '/memories', icon: Heart },
-  { label: 'Surprises', href: '/surprises', icon: Sparkles }, { label: 'Our Days', href: '/our-days', icon: CalendarDays }, { label: 'Settings', href: '/settings', icon: Settings },
+  { label: 'Home', href: '/home', icon: Home }, { label: 'Games', href: '/games', icon: Gamepad2 },
+  { label: 'Love Notes', href: '/notes', icon: MessageCircle }, { label: 'Surprises', href: '/surprises', icon: Sparkles },
+  { label: 'Memories', href: '/memories', icon: Heart }, { label: 'Our Days', href: '/our-days', icon: CalendarDays },
 ]
-const mobileNav = nav.filter(({ href }) => href !== '/settings')
+const mobileNav = nav
 let clientNow = 0
 function subscribeToClock(callback: () => void) {
   const timer = window.setTimeout(() => { clientNow = Date.now(); callback() }, 0)
@@ -49,8 +49,119 @@ function avatarStyle(url: string | null) { return url ? { backgroundImage: `url(
 function dateLabel(value: string, options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' }) { return new Date(`${value.slice(0, 10)}T12:00:00Z`).toLocaleDateString('en-US', { ...options, timeZone: 'UTC' }) }
 function daysSince(value: string, now: number) { return Math.max(1, Math.floor((now - new Date(value).getTime()) / 86400000) + 1) }
 
-export function PrivateNav({ active }: { active: string }) {
-  return <><aside className="private-side"><Link href="/home" className="private-wordmark">shuvia<span>®</span></Link><p className="private-nav-label">YOUR LITTLE WORLD</p><nav>{nav.map(({ label, href, icon: Icon }) => <Link key={href} href={href} aria-current={active === href ? 'page' : undefined} className={active === href ? 'private-nav-link is-current' : 'private-nav-link'}><Icon size={17}/>{label}{active === href && <span className="nav-current-dot"/>}</Link>)}</nav><div className="private-side-bottom"><div className="side-quote">“The little things<br/>are the big things.”</div><Link href="/space" className="space-settings"><LockKeyhole size={15}/> Connection settings</Link><LogoutButton/></div></aside><nav className="private-mobile-nav" aria-label="Your Shuvia navigation">{mobileNav.map(({ label, href, icon: Icon }) => <Link key={href} href={href} aria-current={active === href ? 'page' : undefined} className={active === href ? 'mobile-nav-link is-current' : 'mobile-nav-link'}><Icon size={19}/><span>{label}</span></Link>)}</nav></>
+type ConnectionSummary = { state: string; is_owner?: boolean; invitation_expires_at?: string | null; partner_name?: string | null }
+type AccountSummary = { fullName: string; email: string; avatarUrl: string | null }
+type GeneratedInvite = { code: string; inviteUrl: string; expiresAt: string }
+
+export function PrivateNav({ active, initialState, initialName }: { active: string; initialState?: string; initialName?: string }) {
+  const [profileOpen, setProfileOpen] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
+  const [inviteOpen, setInviteOpen] = useState(false)
+  const [connection, setConnection] = useState<ConnectionSummary>({ state: initialState ?? 'loading' })
+  const [account, setAccount] = useState<AccountSummary | null>(null)
+  const [invite, setInvite] = useState<GeneratedInvite | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [logoutBusy, setLogoutBusy] = useState(false)
+  const [menuError, setMenuError] = useState('')
+  const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
+  const [copied, setCopied] = useState<'code' | 'link' | null>(null)
+  const [consented, setConsented] = useState(false)
+  const router = useRouter()
+  const name = account?.fullName || initialName || 'My profile'
+  const initialsText = name.trim().split(/\s+/).map((part) => part[0]).slice(0, 2).join('').toUpperCase() || 'S'
+
+  useEffect(() => {
+    let live = true
+    const loadAccount = () => { void fetch('/api/settings', { cache: 'no-store' }).then(async (response) => response.ok ? response.json() : null).then((settings) => { if (live && settings?.account) setAccount(settings.account as AccountSummary) }).catch(() => undefined) }
+    const loadConnection = () => { void fetch('/api/couple', { cache: 'no-store' }).then(async (response) => response.ok ? response.json() : null).then((couple) => { if (live && couple?.space) setConnection(couple.space as ConnectionSummary) }).catch(() => undefined) }
+    loadAccount(); loadConnection()
+    window.addEventListener('shuvia:profile-updated', loadAccount)
+    window.addEventListener('shuvia:connection-updated', loadConnection)
+    return () => { live = false; window.removeEventListener('shuvia:profile-updated', loadAccount); window.removeEventListener('shuvia:connection-updated', loadConnection) }
+  }, [])
+
+  useEffect(() => {
+    if (!inviteOpen) return
+    function onKey(event: KeyboardEvent) { if (event.key === 'Escape') setInviteOpen(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [inviteOpen])
+
+  async function generateInvitation() {
+    setBusy(true); setError(''); setNotice(''); setCopied(null)
+    try {
+      const action = connection.state === 'invitation_expired' || connection.state === 'invitation_sent' || connection.state === 'waiting_for_partner' ? 'regenerate' : 'create'
+      const response = await fetch('/api/couple', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action, ...(action === 'create' ? { consentPolicy: true } : {}) }) })
+      const result = await response.json() as GeneratedInvite & { error?: string }
+      if (!response.ok) throw new Error(result.error ?? 'We could not create the invitation yet.')
+      setInvite(result)
+      setConnection((current) => ({ ...current, state: 'invitation_sent', is_owner: true, invitation_expires_at: result.expiresAt }))
+      setConsented(false)
+      setNotice('Your invitation is ready. Save the code now; it will not be shown again.')
+    } catch (cause) { setError(cause instanceof Error ? cause.message : 'We could not create the invitation yet.') }
+    finally { setBusy(false) }
+  }
+
+  async function copyInvite(kind: 'code' | 'link') {
+    if (!invite) return
+    try { await navigator.clipboard.writeText(kind === 'code' ? invite.code : invite.inviteUrl); setCopied(kind); setNotice(kind === 'code' ? 'Invitation code copied.' : 'Invitation link copied.') }
+    catch { setError('Clipboard access is unavailable. Select and copy the invitation manually.') }
+  }
+
+  async function shareInvite() {
+    if (!invite) return
+    if (navigator.share) {
+      try { await navigator.share({ title: 'Join my Shuvia space', text: `Use invitation code ${invite.code} to join my Shuvia space.`, url: invite.inviteUrl }); setNotice('Invitation shared.') }
+      catch (cause) { if (cause instanceof Error && cause.name !== 'AbortError') setError('Sharing is unavailable on this device.') }
+    } else await copyInvite('link')
+  }
+
+  async function logout() {
+    setLogoutBusy(true); setMenuError('')
+    try {
+      const response = await fetch('/api/auth/logout', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' })
+      if (!response.ok) throw new Error('Please try logging out again.')
+      router.replace('/login'); router.refresh()
+    } catch (cause) { setMenuError(cause instanceof Error ? cause.message : 'Please try logging out again.') }
+    finally { setLogoutBusy(false) }
+  }
+
+  const connected = connection.state === 'connected'
+  const invitePending = ['invitation_sent', 'waiting_for_partner', 'invitation_expired', 'invitation_accepted'].includes(connection.state)
+  return <>
+    <header className="private-global-nav">
+      <ShuviaLogo href="/home" className="private-brand"/>
+      <nav className="private-primary-nav" aria-label="Main dashboard navigation">
+        {nav.map(({ label, href }) => <Link key={href} href={href} aria-current={active === href ? 'page' : undefined} className={active === href ? 'private-primary-link is-current' : 'private-primary-link'}>{label}</Link>)}
+      </nav>
+      <div className="private-nav-actions">
+        {connected ? <span className="private-connection-pill"><i/>Connected{connection.partner_name ? ` with ${connection.partner_name.split(' ')[0]}` : ''}</span> : <button className="private-invite-button" onClick={() => { setInviteOpen(true); setProfileOpen(false); setMoreOpen(false) }}><Heart size={15}/>Invite Partner</button>}
+        <button className="private-avatar-button" aria-label={`Open profile menu for ${name}`} aria-haspopup="menu" aria-expanded={profileOpen} onClick={() => { setProfileOpen((open) => !open); setMoreOpen(false) }}>
+          {account?.avatarUrl ? <span className="private-avatar-photo" aria-hidden="true" style={{ backgroundImage: `url(${JSON.stringify(account.avatarUrl)})` }}/> : <span>{initialsText}</span>}
+        </button>
+        <button className="private-more-button" aria-label="More navigation and actions" aria-expanded={moreOpen} onClick={() => { setMoreOpen((open) => !open); setProfileOpen(false) }}><Menu size={18}/></button>
+        {profileOpen && <div className="private-popover private-profile-menu" role="menu"><div className="private-profile-head">{account?.avatarUrl ? <span className="private-avatar-photo" aria-hidden="true" style={{ backgroundImage: `url(${JSON.stringify(account.avatarUrl)})` }}/> : <span>{initialsText}</span>}<div><b>{name}</b><small>{account?.email ?? 'Your Shuvia account'}</small></div></div>
+          <Link role="menuitem" href="/settings?tab=account#profile" onClick={() => setProfileOpen(false)}><UserRound size={15}/>My Profile</Link>
+          <Link role="menuitem" href="/settings?tab=account#profile" onClick={() => setProfileOpen(false)}><UserRound size={15}/>Edit Profile</Link>
+          <Link role="menuitem" href="/settings?tab=account#account-security" onClick={() => setProfileOpen(false)}><LockKeyhole size={15}/>Account Settings</Link>
+          <Link role="menuitem" href="/settings?tab=preferences#theme-preferences" onClick={() => setProfileOpen(false)}><Sparkles size={15}/>Theme Preferences</Link>
+          <Link role="menuitem" href="/settings?tab=preferences#privacy-preferences" onClick={() => setProfileOpen(false)}><LockKeyhole size={15}/>Privacy Settings</Link>
+          <button role="menuitem" onClick={() => { setProfileOpen(false); setInviteOpen(true) }}><Link2 size={15}/>Invitation Management</button>
+          <Link role="menuitem" href="/space" onClick={() => setProfileOpen(false)}><Heart size={15}/>Relationship Management</Link>
+          {menuError && <p className="private-menu-error" role="alert">{menuError}</p>}
+          <div className="private-menu-divider"/><button type="button" role="menuitem" disabled={logoutBusy} onClick={() => void logout()}><X size={15}/>{logoutBusy ? 'Logging out…' : 'Log out'}</button>
+        </div>}
+        {moreOpen && <div className="private-popover private-more-menu"><p>MORE</p><Link href="/join" onClick={() => setMoreOpen(false)}><Link2 size={15}/>Join with Invitation Code</Link><Link href="/space" onClick={() => setMoreOpen(false)}><Heart size={15}/>Relationship Management</Link>{!connected && <button onClick={() => { setMoreOpen(false); setInviteOpen(true) }}><Share2 size={15}/>Invite your partner</button>}</div>}
+      </div>
+    </header>
+    <nav className="private-mobile-nav" aria-label="Your Shuvia navigation">{mobileNav.map(({ label, href, icon: Icon }) => <Link key={href} href={href} aria-current={active === href ? 'page' : undefined} className={active === href ? 'mobile-nav-link is-current' : 'mobile-nav-link'}><Icon size={19}/><span>{label}</span></Link>)}</nav>
+    {inviteOpen && <div className="private-dialog-scrim" onMouseDown={(event) => { if (event.target === event.currentTarget) setInviteOpen(false) }}><section className="private-invite-dialog" role="dialog" aria-modal="true" aria-labelledby="private-invite-title"><button className="private-dialog-close" aria-label="Close invitation manager" onClick={() => setInviteOpen(false)}><X size={18}/></button><div className="private-dialog-mark"><Heart size={20}/></div><p className="private-dialog-eyebrow">A PRIVATE INVITATION</p><h2 id="private-invite-title">Invite Your Partner</h2><p className="private-dialog-copy">Share an invitation to connect your accounts and create your shared space.</p>
+      {error && <p className="private-dialog-error" role="alert">{error}</p>}{notice && <p className="private-dialog-notice" role="status">{notice}</p>}
+      {connected ? <div className="private-invite-state"><span className="private-connection-pill"><i/>CONNECTED</span><p>Your shared space with {connection.partner_name || 'your person'} is ready.</p><Link href="/space" onClick={() => setInviteOpen(false)}>Manage your connection <ChevronRight size={15}/></Link></div> : invite ? <div className="private-invite-result"><span className="private-dialog-eyebrow">YOUR INVITATION CODE</span><strong>{invite.code}</strong><div className="private-invite-actions"><button onClick={() => void copyInvite('code')}>{copied === 'code' ? <Check size={15}/> : <Copy size={15}/>}Copy Code</button><button onClick={() => void copyInvite('link')}>{copied === 'link' ? <Check size={15}/> : <Link2 size={15}/>}Copy Invitation Link</button><button onClick={() => void shareInvite()}><Share2 size={15}/>Share Invitation</button></div><p>Expires {new Date(invite.expiresAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })} · shown once</p></div> : invitePending ? <div className="private-invite-state"><span className={`private-invite-status ${connection.state === 'invitation_expired' ? 'is-expired' : ''}`}>{connection.state === 'invitation_accepted' ? 'ACCEPTANCE WAITING FOR CONFIRMATION' : connection.state === 'invitation_expired' ? 'INVITATION EXPIRED' : 'INVITATION IN PROGRESS'}</span>{connection.invitation_expires_at && <p>Expires {new Date(connection.invitation_expires_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}. For your security, the original code cannot be shown again.</p>}<Link href="/space" onClick={() => setInviteOpen(false)}>Review invitation status <ChevronRight size={15}/></Link>{connection.is_owner && connection.state !== 'invitation_accepted' && <button className="private-dialog-primary" disabled={busy} onClick={() => void generateInvitation()}>{busy ? 'Preparing…' : 'Regenerate Invitation'}</button>}</div> : <div className="private-invite-state"><p>Your accounts stay separate. Either person can end the connection. Your partner must accept before you confirm the shared space.</p><label className="private-invite-consent"><input type="checkbox" checked={consented} onChange={(event) => setConsented(event.target.checked)}/><span>I understand and consent to create this private shared space.</span></label><button className="private-dialog-primary" disabled={busy || !consented || connection.state === 'loading'} onClick={() => void generateInvitation()}>{busy ? 'Preparing your invitation…' : 'Generate Invitation'}</button></div>}
+      {!connected && <Link className="private-dialog-join" href="/join" onClick={() => setInviteOpen(false)}>Join with Invitation Code</Link>}
+    </section></div>}
+  </>
 }
 
 export function CoupleHome({ data, userId }: { data: DashboardData; userId: string }) {
@@ -100,8 +211,8 @@ export function CoupleHome({ data, userId }: { data: DashboardData; userId: stri
 
   const together = now ? daysSince(data.connected_at, now) : null
   const nextDate = data.dates[0]
-  return <div className="private-shell"><PrivateNav active="/home"/><main className="private-main">
-    <header className="private-topbar"><div className="private-breadcrumb"><span>YOUR SPACE</span><span className="crumb-slash">/</span><b>HOME</b></div><div className="private-top-actions"><span className={`live-pill live-${liveState}`}><i/>{liveState === 'live' ? partnerOnline ? `${data.partner_name} is here` : `${data.partner_name} is offline` : liveState === 'reconnecting' ? 'Finding your signal' : liveState === 'offline' ? 'Reconnecting' : 'Opening your space'}</span>{data.your_notifications_enabled !== false && <button className="notification-button" aria-label="Show recent updates" aria-expanded={notificationOpen} onClick={() => { setNotificationOpen(!notificationOpen); setNewActivity(0) }}><Bell size={18}/>{newActivity > 0 && <i/>}</button>}<Link href="/settings" className="top-settings" aria-label={`${data.your_name} and ${data.partner_name}, connection settings`}><span style={avatarStyle(data.your_avatar_url)}>{!data.your_avatar_url && initials(data.your_name)}</span><span style={avatarStyle(data.partner_avatar_url)}>{!data.partner_avatar_url && initials(data.partner_name)}</span><span className="top-names">{data.your_name.split(' ')[0]} & {data.partner_name.split(' ')[0]}</span></Link></div>
+  return <div className="private-shell"><PrivateNav active="/home" initialName={data.your_name}/><main className="private-main">
+    <header className="private-topbar"><div className="private-breadcrumb"><span>YOUR SPACE</span><span className="crumb-slash">/</span><b>HOME</b></div><div className="private-top-actions"><span className="partner-identity"><i style={avatarStyle(data.partner_avatar_url)}>{!data.partner_avatar_url && initials(data.partner_name)}</i><b>{data.partner_name}</b></span><span className={`live-pill live-${liveState}`}><i/>{liveState === 'live' ? partnerOnline ? 'Online' : 'Offline' : liveState === 'reconnecting' ? 'Reconnecting' : liveState === 'offline' ? 'Offline' : 'Checking status'}</span>{data.your_notifications_enabled !== false && <button className="notification-button" aria-label="Show recent updates" aria-expanded={notificationOpen} onClick={() => { setNotificationOpen(!notificationOpen); setNewActivity(0) }}><Bell size={18}/>{newActivity > 0 && <i/>}</button>}</div>
       {notificationOpen && data.your_notifications_enabled !== false && <section className="notification-popover"><div className="popover-heading"><strong>Little updates</strong><button aria-label="Close updates" onClick={() => setNotificationOpen(false)}>×</button></div>{data.activity.length ? data.activity.map((item) => <p key={item.id}><i/>{item.summary}<small>{new Date(item.created_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</small></p>) : <div className="notification-empty"><Bell size={20}/><span>No new notes or shared moments yet.</span></div>}</section>}
     </header>
     <div className="home-content">{partnerJoined && <button className="partner-joined-toast" role="status" onClick={() => setPartnerJoined(false)}><span className="peer-presence is-online"/>{data.partner_name} just joined your little world <span>×</span></button>}
@@ -137,7 +248,7 @@ export function CoupleFeaturePage({ data, kind, title, eyebrow, description }: {
     finally { setBusy(false) }
   }
   const active = isNote ? '/notes' : isDate ? '/our-days' : '/memories'
-  return <div className="private-shell"><PrivateNav active={active}/><main className="private-main"><header className="private-topbar"><div className="private-breadcrumb"><Link href="/home">HOME</Link><span className="crumb-slash">/</span><b>{title.toUpperCase()}</b></div><Link href="/space" className="feature-partners"><span>{initials(data.your_name)}</span><span>{initials(data.partner_name)}</span><span>{data.your_name.split(' ')[0]} & {data.partner_name.split(' ')[0]}</span></Link></header><div className="feature-content"><p className="private-eyebrow"><span/> {eyebrow}</p><h1>{title}</h1><p className="feature-lede">{description}</p>
+  return <div className="private-shell"><PrivateNav active={active} initialName={data.your_name}/><main className="private-main"><header className="private-topbar"><div className="private-breadcrumb"><Link href="/home">HOME</Link><span className="crumb-slash">/</span><b>{title.toUpperCase()}</b></div><Link href="/space" className="feature-partners"><span>{initials(data.your_name)}</span><span>{initials(data.partner_name)}</span><span>{data.your_name.split(' ')[0]} & {data.partner_name.split(' ')[0]}</span></Link></header><div className="feature-content"><p className="private-eyebrow"><span/> {eyebrow}</p><h1>{title}</h1><p className="feature-lede">{description}</p>
     <div className="feature-columns"><section className="feature-compose"><p className="private-eyebrow">A LITTLE SOMETHING FOR YOUR PERSON</p><form onSubmit={submit}><label htmlFor="shared-entry">{isDate ? 'What day shall we remember?' : isNote ? 'Your note' : 'A moment to keep'}</label>{isDate ? <input id="shared-entry" value={text} onChange={(e) => setText(e.target.value)} maxLength={100} placeholder="Our next visit, anniversary…" required/> : <textarea id="shared-entry" value={text} onChange={(e) => setText(e.target.value)} maxLength={isNote ? 500 : 240} placeholder={isNote ? 'A small thing you want them to know…' : 'Where were you? What made you laugh?'} required/>}{isDate && <><label htmlFor="shared-date">The date</label><input id="shared-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} min={new Date().toISOString().slice(0, 10)} required/></>}{kind === 'memory' && <label htmlFor="memory-date">When did it happen?</label>}{kind === 'memory' && <input id="memory-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} max={new Date().toISOString().slice(0, 10)}/>}<button type="submit" className="button button-dark" disabled={busy || !text.trim() || (isDate && !date)}>{busy ? <><LoaderCircle size={15}/> Saving…</> : <>{isNote ? 'Leave this note' : isDate ? 'Add to our days' : 'Keep this memory'} <ChevronRight size={15}/></>}</button>{feedback && <p className={feedback.startsWith('Your') || feedback.startsWith('A day') ? 'feature-feedback success' : 'feature-feedback'} role="status">{feedback}</p>}</form><p className="private-policy"><LockKeyhole size={14}/> Only the two active members of this space can see this.</p></section>
     <section className="feature-list-panel"><div className="panel-top"><div><p className="private-eyebrow">IN YOUR SHARED SPACE</p><h2>{isNote ? 'Recent notes' : isDate ? 'Dates ahead' : 'The memory shelf'}</h2></div>{isNote ? <MessageCircle size={18}/> : isDate ? <CalendarDays size={18}/> : <Heart size={18}/>}</div><FeatureEntries data={data} kind={kind}/></section></div>
     </div></main></div>

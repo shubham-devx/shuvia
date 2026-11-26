@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ArrowRight, Check, Copy, HeartHandshake, Link2, LockKeyhole, MessageCircle, Share2, UserRound } from 'lucide-react'
@@ -27,6 +27,21 @@ export function SpaceDashboard({ initial, loadError = false }: { initial: Couple
   const [confirming, setConfirming] = useState<'cancel' | 'disconnect' | null>(null)
   const router = useRouter()
 
+  useEffect(() => {
+    if (space?.state !== 'invitation_accepted' || space.is_owner) return
+    let live = true
+    const check = async () => {
+      try {
+        const response = await fetch('/api/couple', { cache: 'no-store' })
+        const result = await response.json() as { space?: { state?: string } }
+        if (live && result.space?.state === 'connected') { router.replace('/home'); router.refresh() }
+      } catch { /* Keep the consent status visible if the network is temporarily unavailable. */ }
+    }
+    void check()
+    const timer = window.setInterval(() => void check(), 4000)
+    return () => { live = false; window.clearInterval(timer) }
+  }, [router, space?.is_owner, space?.state])
+
   async function act(action: Action) {
     setBusy(true); setError(''); setNotice('')
     try {
@@ -35,6 +50,7 @@ export function SpaceDashboard({ initial, loadError = false }: { initial: Couple
       const response = await fetch('/api/couple', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
       const result = await response.json() as NewInvitation & { status?: string; error?: string }
       if (!response.ok) throw new Error(result.error ?? 'We could not complete that just now.')
+      window.dispatchEvent(new Event('shuvia:connection-updated'))
       if (action === 'create' || action === 'regenerate') {
         setInvite(result)
         if (initial) setSpace({ ...initial, state: 'invitation_sent', is_owner: true, invitation_expires_at: result.expiresAt, partner_name: null })
@@ -52,7 +68,8 @@ export function SpaceDashboard({ initial, loadError = false }: { initial: Couple
         setSpace((current) => current ? { ...current, state: nextState, invitation_expires_at: null } : current)
         setNotice(messages[action])
         setInvite(null)
-        router.refresh()
+        if (action === 'confirm') { router.replace('/home'); router.refresh() }
+        else router.refresh()
       }
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'We could not complete that just now.') }
     finally { setBusy(false); setConfirming(null) }

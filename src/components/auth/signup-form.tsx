@@ -59,6 +59,6 @@ export function SignupForm() {
       <label htmlFor="signup-confirm">Confirm password</label><div className="password-control"><input id="signup-confirm" type={showPassword ? 'text' : 'password'} autoComplete="new-password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Type it once more" required/></div>
       <label className="terms-control"><input type="checkbox" checked={acceptTerms} onChange={(e) => setAcceptTerms(e.target.checked)}/><span>I agree to the <Link href="/terms" target="_blank" rel="noreferrer">Terms</Link> and <Link href="/privacy" target="_blank" rel="noreferrer">Privacy Policy</Link>.</span></label>
       <button className="button button-dark auth-submit" type="submit" disabled={busy}>{busy ? 'Making your space…' : 'Create my account'} <span aria-hidden="true">→</span></button>
-    </form><p className="auth-bottom">Already have a little world? <Link href="/login">Log in</Link></p>
+    </form><p className="auth-bottom">Already have a little world? <Link href="/login">Log in</Link></p><p className="auth-bottom">Joining your person? <Link href="/join">Enter invitation code</Link></p>
   </>
 }

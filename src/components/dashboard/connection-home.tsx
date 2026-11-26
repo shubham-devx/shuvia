@@ -1,6 +1,10 @@
+"use client"
+
+import { useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { ArrowRight, CalendarDays, Gamepad2, Heart, LockKeyhole, MessageCircle, Sparkles } from 'lucide-react'
-import { LogoutButton } from '@/components/auth/logout-button'
+import { PrivateNav } from '@/components/dashboard/couple-home'
 
 type Props = { name: string; state: string; isOwner?: boolean; loadError?: boolean }
 
@@ -13,11 +17,32 @@ const sharedFeatures = [
 ]
 
 export function ConnectionHome({ name, state, isOwner = false, loadError = false }: Props) {
+  const router = useRouter()
   const firstName = name.trim().split(/\s+/)[0] || 'there'
-  const invitationPending = ['invitation_sent', 'waiting_for_partner', 'invitation_accepted'].includes(state)
+  const invitationPending = ['invitation_sent', 'waiting_for_partner', 'invitation_expired', 'invitation_accepted'].includes(state)
+
+  useEffect(() => {
+    if (!invitationPending) return
+    let live = true
+    const check = async () => {
+      try {
+        const response = await fetch('/api/couple', { cache: 'no-store' })
+        const result = await response.json() as { space?: { state?: string } }
+        if (live && result.space?.state === 'connected') {
+          router.replace('/home')
+          router.refresh()
+        } else if (live && result.space?.state && result.space.state !== state) {
+          router.refresh()
+        }
+      } catch { /* Keep the pending consent view available during a brief network interruption. */ }
+    }
+    void check()
+    const timer = window.setInterval(() => void check(), 4000)
+    return () => { live = false; window.clearInterval(timer) }
+  }, [invitationPending, router, state])
 
   return <div className="connection-home-shell">
-    <header className="connection-home-topbar"><Link className="connection-wordmark" href="/">shuvia<span>®</span></Link><span className="connection-top-note">A PRIVATE SPACE FOR TWO</span><Link className="connection-settings-link" href="/settings">Settings</Link><LogoutButton/></header>
+    <PrivateNav active="/home" initialState={state} initialName={name}/>
     <main className="connection-home">
       <header className="connection-home-intro"><p className="private-eyebrow"><span/> YOUR LITTLE WORLD</p><h1>Welcome, {firstName}.<br/><em>Your space starts here.</em></h1><p>Invite your person to make a private place for notes, games, memories, and days worth looking forward to.</p></header>
 

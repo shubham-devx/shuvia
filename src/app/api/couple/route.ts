@@ -148,3 +148,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Couple spaces are not configured yet. Please try again later.' }, { status: 503 })
   }
 }
+
+export async function GET() {
+  try {
+    const supabase = await createSupabaseServerClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Sign in to view your connection.' }, { status: 401 })
+    const { data, error } = await supabase.rpc('get_my_couple_space')
+    if (error) return NextResponse.json({ error: 'Your connection details are unavailable.' }, { status: 503 })
+    const space = Array.isArray(data) ? data[0] ?? null : data
+    return NextResponse.json({ space: space ? {
+      state: space.state,
+      is_owner: space.is_owner,
+      invitation_expires_at: space.invitation_expires_at,
+      partner_name: space.partner_name,
+    } : { state: 'disconnected' } }, { headers: { 'Cache-Control': 'private, no-store' } })
+  } catch {
+    return NextResponse.json({ error: 'Your connection details are unavailable.' }, { status: 503 })
+  }
+}

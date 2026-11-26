@@ -4,6 +4,7 @@ import { defaultDescription, defaultTitle, siteName, siteUrl, socialImage } from
 import './globals.css'
 import './polish.css'
 import './redesign.css'
+import './private-navigation.css'
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
