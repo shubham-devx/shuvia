@@ -20,13 +20,19 @@ function getRateLimit(action: CoupleAction): RateLimitBucket | null {
 }
 
 function knownError(message: string, code?: string) {
-  if (code === '23505' || message.includes('active couple space') || message.includes('current couple connection')) {
+  if (code === 'PGRST202' || code === '42883' || code === '42P01' || code === '42703' || code === 'PGRST204') {
+    return { status: 503, error: 'The invitation service needs a database update. Ask the app owner to apply the couple-space migrations, then try again.' }
+  }
+  if (code === '40001' || code === '40P01') return { status: 503, error: 'The connection is being updated right now. Please wait a moment and try again.' }
+  if (code === '22023') return { status: 400, error: 'The invitation could not be processed. Check the code and accept the connection policy to continue.' }
+  if (message.includes('already been used') || message.includes('cancelled')) return { status: 409, error: 'This invitation is no longer active. Ask your person to share their latest invitation code.' }
+  if (message.includes('active couple space') || message.includes('current couple connection')) {
     return { status: 409, error: 'You already have an active couple connection. End it before creating or joining another.' }
   }
+  if (code === '23505') return { status: 409, error: 'This invitation can no longer be used. Ask your person to share their latest code.' }
   if (code === 'P0002') return { status: 404, error: 'That invitation or connection is no longer available.' }
   if (code === '42501') return { status: 403, error: message }
   if (message.includes('expired')) return { status: 410, error: 'This invitation has expired. Ask your person to send a fresh one.' }
-  if (message.includes('already been used') || message.includes('cancelled')) return { status: 409, error: 'This invitation has already been used or cancelled.' }
   return { status: 400, error: 'We could not complete that connection step. Please refresh and try again.' }
 }
 
@@ -43,6 +49,7 @@ export async function POST(request: NextRequest) {
   const parsed = coupleActionSchema.safeParse(raw)
   if (!parsed.success) return NextResponse.json({ error: 'Please check that invitation and try again.' }, { status: 400 })
 
+  let stage = 'session-validation'
   try {
     const supabase = await createSupabaseServerClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -53,11 +60,13 @@ export async function POST(request: NextRequest) {
 
     const action = parsed.data
     const bucket = getRateLimit(action)
+    stage = 'rate-limit'
     if (bucket && !await takeLimit(request, bucket)) {
       return NextResponse.json({ error: bucket === 'couple-code' ? 'Too many code attempts. Wait a while, or ask your person for a new link.' : 'Please wait a little before trying again.' }, { status: 429 })
     }
 
     if (action.action === 'create' || action.action === 'regenerate') {
+      stage = 'create-invitation'
       const token = createInvitationToken()
       const code = createInvitationCode()
       const rpcName = action.action === 'create' ? 'create_couple_space' : 'regenerate_couple_invitation'
@@ -66,17 +75,26 @@ export async function POST(request: NextRequest) {
         p_code_hash: hashInvitationCode(code),
         ...(action.action === 'create' ? { p_owner_consents: action.consentPolicy } : {}),
       })
-      if (error) return NextResponse.json(knownError(error.message, error.code), { status: error.code === '23505' ? 409 : 400 })
+      if (error) {
+        console.error('Couple invitation RPC failed:', { action: action.action, code: error.code })
+        const safe = knownError(error.message, error.code)
+        return NextResponse.json(safe, { status: safe.status })
+      }
       const record = Array.isArray(data) ? data[0] : data
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? new URL(request.url).origin
       return NextResponse.json({ token, code: `${code.slice(0, 5)}-${code.slice(5)}`, expiresAt: record?.invitation_expires_at, inviteUrl: new URL(`/invite/${token}`, siteUrl).toString() }, { status: 201 })
     }
 
     if (action.action === 'preview-token' || action.action === 'preview-code') {
+      stage = 'preview-invitation'
       const tokenHash = action.action === 'preview-token' ? hashInvitationToken(action.token) : null
       const codeHash = action.action === 'preview-code' ? hashInvitationCode(action.code) : null
       const { data, error } = await supabase.rpc('preview_couple_invitation', { p_token_hash: tokenHash, p_code_hash: codeHash })
-      if (error) return NextResponse.json(knownError(error.message, error.code), { status: error.code === '42501' ? 403 : 400 })
+      if (error) {
+        console.error('Couple invitation RPC failed:', { action: action.action, code: error.code })
+        const safe = knownError(error.message, error.code)
+        return NextResponse.json(safe, { status: safe.status })
+      }
       const invitation = Array.isArray(data) ? data[0] : data
       if (!invitation) return NextResponse.json({ invitation: { status: 'unavailable' } })
       return NextResponse.json({ invitation: {
@@ -88,10 +106,12 @@ export async function POST(request: NextRequest) {
     }
 
     if (action.action === 'accept-token' || action.action === 'accept-code') {
+      stage = 'accept-invitation'
       const tokenHash = action.action === 'accept-token' ? hashInvitationToken(action.token) : null
       const codeHash = action.action === 'accept-code' ? hashInvitationCode(action.code) : null
       const { data, error } = await supabase.rpc('accept_couple_invitation', { p_token_hash: tokenHash, p_code_hash: codeHash, p_partner_consents: action.consentPolicy })
       if (error) {
+        console.error('Couple invitation RPC failed:', { action: action.action, code: error.code })
         const safe = knownError(error.message, error.code)
         return NextResponse.json(safe, { status: safe.status })
       }
@@ -104,6 +124,7 @@ export async function POST(request: NextRequest) {
       : action.action === 'cancel' ? 'cancel_couple_connection'
         : action.action === 'withdraw' ? 'withdraw_couple_acceptance' : 'disconnect_couple_space'
     let memoryPhotoPaths: string[] = []
+    stage = action.action === 'disconnect' ? 'disconnect-cleanup' : 'update-connection'
     if (action.action === 'disconnect') {
       const { data: dashboard } = await supabase.rpc('get_couple_dashboard')
       if (dashboard?.space_id) {
@@ -113,6 +134,7 @@ export async function POST(request: NextRequest) {
     }
     const { error } = await supabase.rpc(rpcName)
     if (error) {
+      console.error('Couple connection RPC failed:', { action: action.action, code: error.code })
       const safe = knownError(error.message, error.code)
       return NextResponse.json(safe, { status: safe.status })
     }
@@ -120,7 +142,9 @@ export async function POST(request: NextRequest) {
       await createSupabaseAdminClient().storage.from('shuvia-memories').remove(memoryPhotoPaths)
     }
     return NextResponse.json({ status: action.action === 'confirm' ? 'connected' : action.action === 'disconnect' ? 'disconnected' : 'connection_cancelled' })
-  } catch {
+  } catch (cause) {
+    const failure = cause as { code?: unknown }
+    console.error('Couple API operation failed:', { action: parsed.data.action, stage, code: typeof failure.code === 'string' ? failure.code : 'unknown' })
     return NextResponse.json({ error: 'Couple spaces are not configured yet. Please try again later.' }, { status: 503 })
   }
 }
