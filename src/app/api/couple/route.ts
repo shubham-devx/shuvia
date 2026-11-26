@@ -20,7 +20,7 @@ function getRateLimit(action: CoupleAction): RateLimitBucket | null {
 }
 
 function knownError(message: string, code?: string) {
-  if (code === 'PGRST202' || code === '42883' || code === '42P01' || code === '42703' || code === 'PGRST204') {
+  if (code === 'PGRST202' || code === '42883' || code === '42P01' || code === '42703' || code === '42702' || code === 'PGRST204') {
     return { status: 503, error: 'The invitation service needs a database update. Ask the app owner to apply the couple-space migrations, then try again.' }
   }
   if (code === '40001' || code === '40P01') return { status: 503, error: 'The connection is being updated right now. Please wait a moment and try again.' }
