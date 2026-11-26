@@ -1,0 +1,395 @@
+/* Shuvia's shared visual language. Loaded after route styles to keep one palette. */
+:root {
+  color-scheme: light;
+  --paper: var(--brand-ivory);
+  --ink: var(--brand-plum);
+  --muted: var(--brand-secondary-text);
+  --burgundy: var(--brand-burgundy);
+  --rose: var(--brand-rose);
+  --line: var(--brand-border);
+  --lavender: var(--brand-blush);
+  --font-body: 'DM Sans', Arial, sans-serif;
+  --font-ui: 'DM Sans', Arial, sans-serif;
+  --font-romantic: 'Playfair Display', Georgia, serif;
+  --serif: 'Cormorant Garamond', Georgia, serif;
+}
+
+html,
+body {
+  background: var(--brand-ivory);
+  color: var(--brand-plum);
+  font-family: var(--font-body);
+}
+
+body { font-size: 16px; }
+
+h1,
+h2,
+h3,
+.hero h1,
+.manifesto h2,
+.section-heading h2,
+.preview-content h2,
+.ritual-copy h2,
+.faq-title h2,
+.final-cta h2,
+.auth-aside h1,
+.settings-heading h1,
+.private-topbar,
+.connection-home-intro h1,
+.couple-title {
+  color: var(--brand-plum);
+  font-family: var(--font-romantic);
+  text-wrap: pretty;
+}
+
+.ritual-quote,
+.side-quote,
+.header-note,
+.final-note,
+.distance-note,
+.manifesto-kicker,
+.postcard,
+.wordmark,
+.auth-logo {
+  font-family: var(--serif);
+}
+
+.hero h1 { font-size: clamp(56px, 6.2vw, 72px); line-height: .98; }
+.connect-form-wrap h1,
+.auth-aside h1 { font-size: clamp(40px, 5vw, 64px); line-height: 1.02; }
+.connection-home-intro h1,
+.couple-title { font-size: clamp(32px, 3vw, 36px); line-height: 1.12; }
+.manifesto h2,
+.section-heading h2,
+.preview-content h2,
+.ritual-copy h2,
+.faq-title h2,
+.final-cta h2 { font-size: clamp(36px, 4.2vw, 48px); line-height: 1.08; }
+
+.hero-body,
+.manifesto-sub,
+.experience p,
+.preview-text,
+.ritual-copy > p,
+.faq-answer,
+.connect-intro,
+.auth-card-intro,
+.invite-intro,
+.welcome-copy,
+.connection-home-intro > p,
+.couple-lede,
+.settings-section > div > p:not(.private-eyebrow),
+.feature-lede {
+  color: var(--brand-secondary-text);
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+.eyebrow,
+.private-eyebrow,
+.private-nav-label,
+.private-dialog-eyebrow {
+  color: var(--brand-burgundy);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  letter-spacing: .14em;
+}
+
+.button,
+.nav-cta,
+.settings-primary,
+.auth-submit,
+.couple-primary,
+.private-primary-link,
+.private-invite-button,
+.connection-action-primary {
+  border-radius: 999px;
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 600;
+  transition: background-color .2s ease, color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+
+.button-dark,
+.nav-cta,
+.settings-primary,
+.auth-submit,
+.couple-primary,
+.private-primary-link,
+.private-invite-button,
+.connection-action-primary {
+  background: var(--brand-burgundy);
+  color: #fff;
+}
+
+.button-dark:hover,
+.nav-cta:hover,
+.settings-primary:hover,
+.auth-submit:hover,
+.couple-primary:hover,
+.private-primary-link:hover,
+.private-invite-button:hover,
+.connection-action-primary:hover {
+  background: var(--brand-burgundy-dark);
+  box-shadow: 0 8px 20px rgb(88 35 55 / 16%);
+  transform: translateY(-1px);
+}
+
+.button-outline,
+.button-light {
+  border: 1px solid var(--brand-border);
+  border-radius: 999px;
+  color: var(--brand-burgundy);
+}
+
+input:not([type='checkbox']):not([type='radio']):not([type='file']),
+textarea,
+select {
+  border-color: var(--brand-border);
+  border-radius: var(--control-radius);
+  color: var(--brand-plum);
+  font-family: var(--font-ui);
+  font-size: 15px;
+}
+
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid rgb(196 138 143 / 65%);
+  outline-offset: 3px;
+}
+
+.auth-form label,
+.settings-form label,
+.join-code-form label,
+.couple-consent,
+.remember-control,
+.terms-control {
+  color: var(--brand-plum);
+  font-family: var(--font-ui);
+  font-size: 13px;
+}
+
+.site-header,
+.private-global-nav,
+.private-topbar,
+.simple-header {
+  background: var(--surface);
+  border-color: var(--brand-border);
+}
+
+.main-nav .nav-link,
+.private-primary-nav .private-nav-link,
+.private-mobile-nav .mobile-nav-link {
+  color: var(--brand-secondary-text);
+  font-family: var(--font-ui);
+  font-size: 14px;
+}
+
+.main-nav .nav-link:hover,
+.private-primary-nav .private-nav-link:hover,
+.private-primary-nav .private-nav-link.is-current,
+.private-mobile-nav .mobile-nav-link.is-current {
+  color: var(--brand-burgundy);
+}
+
+.private-side { background: var(--brand-blush); }
+.private-shell,
+.private-main,
+.connection-home-shell,
+.couple-page,
+.home-content,
+.love-notes-page,
+.scrapbook-page,
+.our-days-page,
+.account-settings,
+.surprise-studio,
+.game-engine {
+  color: var(--brand-plum);
+}
+
+.home-panel,
+.feature-card,
+.memory-card,
+.letter-card,
+.note-card,
+.game-card,
+.game-setup,
+.couple-card,
+.couple-create-card,
+.connection-status,
+.connection-action,
+.auth-card,
+.settings-section,
+.settings-panel,
+.invite-preview-card,
+.private-popover,
+.private-profile-menu,
+.private-invite-dialog,
+.history-modal,
+.compose-sheet {
+  background-color: var(--surface);
+  border: 1px solid var(--brand-border);
+  border-radius: 18px;
+  box-shadow: 0 8px 26px rgb(41 33 38 / 5%);
+}
+
+.home-panel h2,
+.feature-card h2,
+.memory-card h2,
+.letter-card h2,
+.note-card h2,
+.game-card h2,
+.couple-card h2,
+.couple-create-card h2,
+.connection-status h2,
+.settings-section h2,
+.invite-preview-card h2 {
+  color: var(--brand-plum);
+  font-family: var(--font-romantic);
+  font-size: 20px;
+  line-height: 1.25;
+}
+
+.connection-home,
+.account-settings,
+.home-content,
+.love-notes-page,
+.scrapbook-page,
+.our-days-page,
+.surprise-studio,
+.game-engine { background-color: var(--brand-ivory); }
+
+.private-breadcrumb,
+.private-topbar,
+.settings-tabs,
+.settings-space-links,
+.connection-action-copy,
+.connection-status p,
+.feature-content,
+.day-info,
+.memory-editor,
+.compose-label,
+.settings-form {
+  font-family: var(--font-ui);
+}
+
+.settings-section,
+.connection-action,
+.connection-status,
+.couple-card,
+.couple-create-card,
+.home-panel,
+.feature-card,
+.memory-card,
+.letter-card,
+.note-card,
+.game-card {
+  border-color: var(--brand-border);
+  border-radius: 18px;
+}
+
+.settings-tabs button,
+.settings-space-links a,
+.connection-action-copy span,
+.connection-status p,
+.feature-content p,
+.day-info p,
+.memory-editor p,
+.settings-section p:not(.private-eyebrow),
+.invite-preview-card > p:not(.eyebrow) {
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.nav-current-dot,
+.is-current .nav-current-dot,
+.accepted-seal,
+.success { color: var(--brand-success); }
+
+.feature-feedback,
+.settings-feedback,
+.auth-error,
+.auth-success { border-radius: 12px; }
+
+img { border-color: var(--brand-border); }
+
+.private-nav-link.is-current,
+.private-mobile-nav .mobile-nav-link.is-current,
+.private-connection-pill,
+.active-card-top,
+.live-pill {
+  color: var(--brand-burgundy);
+}
+
+.auth-error,
+.settings-error,
+.memory-error,
+.notes-error,
+.feature-feedback.error {
+  color: var(--brand-error);
+}
+
+.auth-success,
+.settings-success,
+.feature-feedback.success {
+  color: var(--brand-success);
+}
+
+.invite-policy,
+.privacy-promise,
+.connection-preview,
+.connection-status,
+.settings-danger {
+  background-color: var(--brand-blush);
+  border-color: var(--brand-border);
+}
+
+.invite-symbol,
+.feature-icon,
+.experience-icon,
+.partner-avatar,
+.private-avatar-button {
+  color: var(--brand-burgundy);
+}
+
+.menu-toggle,
+.private-more-button,
+.notification-button,
+.icon-copy {
+  color: var(--brand-burgundy);
+}
+
+@media (max-width: 800px) {
+  .hero h1 { font-size: clamp(56px, 12vw, 64px); }
+  .connect-form-wrap h1,
+  .auth-aside h1 { font-size: clamp(38px, 10vw, 54px); }
+  .connection-home-intro h1,
+  .couple-title { font-size: clamp(30px, 8vw, 36px); }
+  .hero-body,
+  .manifesto-sub,
+  .experience p,
+  .preview-text,
+  .ritual-copy > p,
+  .faq-answer,
+  .connect-intro,
+  .auth-card-intro,
+  .invite-intro,
+  .welcome-copy,
+  .connection-home-intro > p,
+  .couple-lede,
+  .feature-lede { font-size: 15px; }
+  .site-header { background: var(--surface); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
+}

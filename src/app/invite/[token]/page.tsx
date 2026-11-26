@@ -3,6 +3,7 @@ import { Header, Footer } from '@/App'
 import { InvitationAcceptance, type InvitationPreview } from '@/components/couple/invitation-acceptance'
 import { hashInvitationToken } from '@/lib/couple/tokens'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,7 +22,14 @@ export default async function InvitationPage({ params }: { params: Promise<{ tok
   try {
     const { data } = await supabase.rpc('preview_couple_invitation', { p_token_hash: hashInvitationToken(token), p_code_hash: null })
     const row = Array.isArray(data) ? data[0] : data
-    if (row) preview = { status: row.invitation_status, spaceStatus: row.space_status, inviterFirstName: row.inviter_first_name, expiresAt: row.expires_at }
+    if (row) {
+      let inviterAvatarUrl = row.inviter_avatar_path ?? null
+      if (inviterAvatarUrl && !inviterAvatarUrl.startsWith('http')) {
+        const { data: avatar } = await createSupabaseAdminClient().storage.from('shuvia-avatars').createSignedUrl(inviterAvatarUrl, 900)
+        inviterAvatarUrl = avatar?.signedUrl ?? null
+      }
+      preview = { status: row.invitation_status, spaceStatus: row.space_status, inviterFirstName: row.inviter_first_name, inviterAvatarUrl, expiresAt: row.expires_at }
+    }
   } catch { preview = null }
   return <><Header/><InvitationAcceptance token={token} preview={preview}/><Footer/></>
 }

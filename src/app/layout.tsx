@@ -5,6 +5,7 @@ import './globals.css'
 import './polish.css'
 import './redesign.css'
 import './private-navigation.css'
+import './brand-system.css'
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -19,8 +20,8 @@ export const metadata: Metadata = {
   icons: { icon: [{ url: '/icons/shuvia-192.png', type: 'image/png', sizes: '192x192' }, { url: '/icons/shuvia-512.png', type: 'image/png', sizes: '512x512' }], apple: '/icons/shuvia-192.png' },
 }
 
-export const viewport: Viewport = { themeColor: '#6b2948', width: 'device-width', initialScale: 1 }
+export const viewport: Viewport = { themeColor: '#722F45', width: 'device-width', initialScale: 1 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return <html lang="en" data-scroll-behavior="smooth"><head><link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous"/><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet"/></head><body><AppShell>{children}</AppShell></body></html>
+  return <html lang="en" data-scroll-behavior="smooth"><head><link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous"/><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet"/></head><body><AppShell>{children}</AppShell></body></html>
 }

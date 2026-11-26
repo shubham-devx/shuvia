@@ -15,7 +15,7 @@ function sameOrigin(request: NextRequest) {
 function getRateLimit(action: CoupleAction): RateLimitBucket | null {
   if (action.action === 'create') return 'couple-create'
   if (action.action === 'regenerate') return 'couple-regenerate'
-  if (action.action === 'preview-code' || action.action === 'accept-code') return 'couple-code'
+  if (action.action === 'preview-code' || action.action === 'accept-code' || action.action === 'decline-code' || action.action === 'decline-token') return 'couple-code'
   return null
 }
 
@@ -97,10 +97,16 @@ export async function POST(request: NextRequest) {
       }
       const invitation = Array.isArray(data) ? data[0] : data
       if (!invitation) return NextResponse.json({ invitation: { status: 'unavailable' } })
+      let inviterAvatarUrl: string | null = invitation.inviter_avatar_path ?? null
+      if (inviterAvatarUrl && !inviterAvatarUrl.startsWith('http')) {
+        const { data: avatar } = await createSupabaseAdminClient().storage.from('shuvia-avatars').createSignedUrl(inviterAvatarUrl, 900)
+        inviterAvatarUrl = avatar?.signedUrl ?? null
+      }
       return NextResponse.json({ invitation: {
         status: invitation.invitation_status,
         spaceStatus: invitation.space_status,
         inviterFirstName: invitation.inviter_first_name,
+        inviterAvatarUrl,
         expiresAt: invitation.expires_at,
       } })
     }
@@ -120,26 +126,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ status: result?.space_status ?? 'invitation_accepted' })
     }
 
+    if (action.action === 'decline-token' || action.action === 'decline-code') {
+      stage = 'decline-invitation'
+      const tokenHash = action.action === 'decline-token' ? hashInvitationToken(action.token) : null
+      const codeHash = action.action === 'decline-code' ? hashInvitationCode(action.code) : null
+      const { data, error } = await supabase.rpc('decline_couple_invitation', { p_token_hash: tokenHash, p_code_hash: codeHash })
+      if (error) {
+        console.error('Couple invitation RPC failed:', { action: action.action, code: error.code })
+        const safe = knownError(error.message, error.code)
+        return NextResponse.json(safe, { status: safe.status })
+      }
+      return NextResponse.json({ status: data ?? 'declined' })
+    }
+
     const rpcName = action.action === 'confirm' ? 'confirm_couple_connection'
       : action.action === 'cancel' ? 'cancel_couple_connection'
         : action.action === 'withdraw' ? 'withdraw_couple_acceptance' : 'disconnect_couple_space'
-    let memoryPhotoPaths: string[] = []
     stage = action.action === 'disconnect' ? 'disconnect-cleanup' : 'update-connection'
-    if (action.action === 'disconnect') {
-      const { data: dashboard } = await supabase.rpc('get_couple_dashboard')
-      if (dashboard?.space_id) {
-        const { data: memories } = await createSupabaseAdminClient().from('shared_memories').select('photo_path').eq('space_id', dashboard.space_id).not('photo_path', 'is', null)
-        memoryPhotoPaths = (memories ?? []).flatMap((memory) => memory.photo_path ? [memory.photo_path] : [])
-      }
-    }
     const { error } = await supabase.rpc(rpcName)
     if (error) {
       console.error('Couple connection RPC failed:', { action: action.action, code: error.code })
       const safe = knownError(error.message, error.code)
       return NextResponse.json(safe, { status: safe.status })
-    }
-    if (memoryPhotoPaths.length) {
-      await createSupabaseAdminClient().storage.from('shuvia-memories').remove(memoryPhotoPaths)
     }
     return NextResponse.json({ status: action.action === 'confirm' ? 'connected' : action.action === 'disconnect' ? 'disconnected' : 'connection_cancelled' })
   } catch (cause) {
@@ -157,12 +165,13 @@ export async function GET() {
     const { data, error } = await supabase.rpc('get_my_couple_space')
     if (error) return NextResponse.json({ error: 'Your connection details are unavailable.' }, { status: 503 })
     const space = Array.isArray(data) ? data[0] ?? null : data
+    const { data: relationshipCode } = await supabase.rpc('get_my_relationship_code')
     return NextResponse.json({ space: space ? {
       state: space.state,
       is_owner: space.is_owner,
       invitation_expires_at: space.invitation_expires_at,
       partner_name: space.partner_name,
-    } : { state: 'disconnected' } }, { headers: { 'Cache-Control': 'private, no-store' } })
+    } : { state: 'disconnected' }, relationshipCode: relationshipCode ?? null }, { headers: { 'Cache-Control': 'private, no-store' } })
   } catch {
     return NextResponse.json({ error: 'Your connection details are unavailable.' }, { status: 503 })
   }

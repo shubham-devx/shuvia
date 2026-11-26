@@ -85,17 +85,18 @@ sequenceDiagram
   API->>DB: Create room and invitation
   DB-->>API: One-time link token and code
   API-->>Owner: Show invitation details once
-  Partner->>API: Inspect / accept link or code
+  Partner->>API: Preview link or code
   API->>Auth: Validate partner session and onboarding
-  API->>DB: Accept invitation under room lock
-  DB-->>API: Pending owner confirmation
-  API-->>Owner: Show partner acceptance
-  Owner->>API: Confirm connection
-  API->>DB: Confirm membership
-  DB-->>API: Connected room state
+  API->>DB: Preview invitation under room lock
+  DB-->>API: Sender identity, status and expiry
+  Partner->>API: Explicitly accept or decline
+  API->>DB: Validate and mutate under transaction/room lock
+  DB-->>API: Connected state and stable relationship code
+  API-->>Partner: Open the shared dashboard
+  API-->>Owner: Show connected state on next dashboard load
 ```
 
-The link token is high entropy and stored as a hash; the short code is stored as an HMAC. Both are shown only at invitation creation. Database functions serialize competing acceptance attempts and enforce the one-owner/one-partner connection rules. Disconnect closes the room and removes room-scoped content according to the migration policies.
+The link token is high entropy and stored as a hash; the short code is stored as an HMAC. Invitations expire after 24 hours and are shown only at creation. Opening an invitation never connects users. The recipient must explicitly accept; acceptance is transactional and idempotent, and the existing inviter consent plus recipient consent opens the shared dashboard immediately. The separate relationship code is an identifier only and cannot be used to join. Disconnect closes membership while retaining shared records privately and preventing former members from accessing them.
 
 ### Reading and writing a private feature
 
@@ -124,7 +125,7 @@ Games, letters, surprises, memories, special days, settings, and couple dashboar
 2. The API verifies the session, file size/type/signature, rate limit, and the user's private scope.
 3. The server uploads to a private bucket and records the object path in the database.
 4. For display, the server checks the record's owner or active room membership, then creates a short-lived signed URL.
-5. Deleting or disconnecting removes the associated records and objects as defined by the feature migration.
+5. Deleting a record removes its associated object. Disconnecting retains shared records privately and removes former members' access; confirmed account deletion removes the account's shared space and content.
 
 Never make these buckets public or store a permanent public image URL in the UI.
 
@@ -134,7 +135,7 @@ Never make these buckets public or store a permanent public image URL in the UI.
 - **Couple data:** Shared feature rows are scoped to a couple-space ID and access requires active membership. Each room has two members at most.
 - **Invitation data:** Secrets are hashed or HMAC-protected in the database. The raw link token/code is returned only at creation.
 - **Stored files:** Avatar keys are user-scoped; memory keys are room-scoped. Buckets are private.
-- **Disconnect:** The room and associated shared content follow the database disconnect cleanup behavior. Individual accounts and profiles remain.
+- **Disconnect:** Membership ends, shared records remain stored but former members cannot access them. Confirmed account deletion removes the associated shared space and content. Individual account data remains until its owner deletes it.
 - **Account deletion:** The account settings flow closes an active room, removes related shared files/data, revokes sessions, then deletes the current Auth user.
 
 ## Security boundaries
