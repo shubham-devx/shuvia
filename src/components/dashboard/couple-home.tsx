@@ -67,7 +67,6 @@ export function PrivateNav({ active, initialState, initialName }: { active: stri
   const [notice, setNotice] = useState('')
   const [copied, setCopied] = useState<'code' | 'link' | null>(null)
   const [consented, setConsented] = useState(false)
-  const router = useRouter()
   const name = account?.fullName || initialName || 'My profile'
   const initialsText = name.trim().split(/\s+/).map((part) => part[0]).slice(0, 2).join('').toUpperCase() || 'S'
 
@@ -120,9 +119,10 @@ export function PrivateNav({ active, initialState, initialName }: { active: stri
   async function logout() {
     setLogoutBusy(true); setMenuError('')
     try {
+      await createSupabaseBrowserClient().auth.signOut().catch(() => undefined)
       const response = await fetch('/api/auth/logout', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' })
       if (!response.ok) throw new Error('Please try logging out again.')
-      router.replace('/login'); router.refresh()
+      window.location.assign('/login')
     } catch (cause) { setMenuError(cause instanceof Error ? cause.message : 'Please try logging out again.') }
     finally { setLogoutBusy(false) }
   }

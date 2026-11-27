@@ -45,7 +45,7 @@ export default async function InvitationPage({ params }: { params: Promise<{ tok
           const { data: avatar } = await createSupabaseAdminClient().storage.from('shuvia-avatars').createSignedUrl(inviterAvatarUrl, 900)
           inviterAvatarUrl = avatar?.signedUrl ?? null
         }
-        preview = { status: row.invitation_status, spaceStatus: row.space_status, inviterFirstName: row.inviter_first_name, inviterAvatarUrl, expiresAt: row.expires_at }
+        preview = { status: row.invitation_status, spaceStatus: row.space_status, inviterFirstName: row.inviter_first_name, inviterAvatarUrl, expiresAt: row.expires_at, viewerEmail: user.email ?? null }
       }
     }
   } catch { preview = null }
