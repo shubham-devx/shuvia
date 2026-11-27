@@ -4,7 +4,6 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { MailCheck } from 'lucide-react'
-import { createSupabaseBrowserClient } from '@/lib/supabase/client'
 import { safeInternalPath } from '@/lib/auth/redirect'
 import { AuthMessage } from './frame'
 
@@ -15,12 +14,15 @@ export function VerifyPanel() {
     event.preventDefault(); setError(''); setBusy(true)
     try {
       const nextRoute = safeInternalPath(params.get('next'))
-      const callbackUrl = new URL('/auth/callback', window.location.origin)
-      callbackUrl.searchParams.set('next', nextRoute)
-      const { error: authError } = await createSupabaseBrowserClient().auth.resend({ type: 'signup', email, options: { emailRedirectTo: callbackUrl.toString() } })
-      if (authError) throw authError
+      const response = await fetch('/api/auth/verify-email', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email, next: nextRoute }),
+      })
+      const result = await response.json() as { error?: string }
+      if (!response.ok) throw new Error(result.error ?? 'We could not resend that link right now.')
       setSent(true)
-    } catch { setError('We could not resend that link right now. Check the email address or try again in a little while.') }
+    } catch (cause) { setError(cause instanceof Error ? cause.message : 'We could not resend that link right now. Check the email address or try again in a little while.') }
     finally { setBusy(false) }
   }
   const nextParam = params.get('next')

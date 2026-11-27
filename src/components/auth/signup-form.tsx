@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { signupSchema } from '@/lib/auth/schemas'
 import { safeInternalPath } from '@/lib/auth/redirect'
-import { createSupabaseBrowserClient, setRememberMePreference } from '@/lib/supabase/client'
+import { setRememberMePreference } from '@/lib/supabase/client'
 import { AuthMessage } from './frame'
 
 export function SignupForm() {
@@ -32,21 +32,15 @@ export function SignupForm() {
     if (!parsed.success) { setMessage({ kind: 'error', text: parsed.error.issues[0]?.message ?? 'Check the details and try again.' }); return }
     setBusy(true)
     try {
-      const supabase = createSupabaseBrowserClient()
       const nextRoute = safeInternalPath(params.get('next'))
-      const callbackUrl = new URL('/auth/callback', window.location.origin)
-      callbackUrl.searchParams.set('next', nextRoute)
-      const { data, error } = await supabase.auth.signUp({
-        email: parsed.data.email,
-        password: parsed.data.password,
-        options: {
-          emailRedirectTo: callbackUrl.toString(),
-          data: { full_name: parsed.data.fullName, legal_accepted: true, legal_version: '2026-11-25' },
-        },
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ ...parsed.data, next: nextRoute }),
       })
-      if (error) throw error
+      const result = await response.json() as { error?: string }
+      if (!response.ok) throw new Error(result.error ?? 'Account setup is not connected yet. Please try again later.')
       setRememberMePreference(true)
-      if (data.session) { router.replace(nextRoute); return }
       router.replace(`/verify-email?email=${encodeURIComponent(parsed.data.email)}&sent=1&next=${encodeURIComponent(nextRoute)}`)
     } catch (error) {
       setMessage({ kind: 'error', text: error instanceof Error && error.name !== 'ZodError' ? error.message : 'Account setup is not connected yet. Please try again later.' })

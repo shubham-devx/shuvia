@@ -39,10 +39,10 @@ function knownError(message: string, code?: string) {
   return { status: 400, error: 'We could not complete that connection step. Please refresh and try again.' }
 }
 
-async function takeLimit(request: NextRequest, bucket: RateLimitBucket) {
+async function takeLimit(request: NextRequest, bucket: RateLimitBucket, userId: string) {
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
     ?? request.headers.get('x-real-ip') ?? 'unknown'
-  return enforceRateLimit(ip, bucket)
+  return enforceRateLimit(`${ip}:${userId}`, bucket)
 }
 
 export async function POST(request: NextRequest) {
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     const action = parsed.data
     const bucket = getRateLimit(action)
     stage = 'rate-limit'
-    if (bucket && !await takeLimit(request, bucket)) {
+    if (bucket && !await takeLimit(request, bucket, user.id)) {
       return NextResponse.json({ error: bucket === 'couple-code' ? 'Too many code attempts. Wait a while, or ask your person for a new link.' : 'Please wait a little before trying again.' }, { status: 429 })
     }
 
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
       }
       const record = Array.isArray(data) ? data[0] : data
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? new URL(request.url).origin
-      return NextResponse.json({ token, code: `${code.slice(0, 5)}-${code.slice(5)}`, expiresAt: record?.invitation_expires_at, inviteUrl: new URL(`/invite/${token}`, siteUrl).toString() }, { status: 201 })
+      return NextResponse.json({ token, code, expiresAt: record?.invitation_expires_at, inviteUrl: new URL(`/invite/${token}`, siteUrl).toString() }, { status: 201 })
     }
 
     if (action.action === 'preview-token' || action.action === 'preview-code') {

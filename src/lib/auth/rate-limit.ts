@@ -8,8 +8,8 @@ export type RateLimitBucket = 'recovery-email' | 'onboarding' | 'couple-create' 
 const limits: Record<RateLimitBucket, { requests: number; window: number }> = {
   'recovery-email': { requests: 3, window: 3600 },
   onboarding: { requests: 10, window: 600 },
-  'couple-create': { requests: 3, window: 86400 },
-  'couple-regenerate': { requests: 5, window: 86400 },
+  'couple-create': { requests: 10, window: 3600 },
+  'couple-regenerate': { requests: 15, window: 3600 },
   'couple-code': { requests: 8, window: 3600 },
   'game-start': { requests: 20, window: 3600 },
   'love-note-send': { requests: 10, window: 3600 },
