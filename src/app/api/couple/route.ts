@@ -24,7 +24,10 @@ function knownError(message: string, code?: string) {
     return { status: 503, error: 'The invitation service needs a database update. Ask the app owner to apply the couple-space migrations, then try again.' }
   }
   if (code === '40001' || code === '40P01') return { status: 503, error: 'The connection is being updated right now. Please wait a moment and try again.' }
-  if (code === '22023') return { status: 400, error: 'The invitation could not be processed. Check the code and accept the connection policy to continue.' }
+  if (code === '22023') {
+    if (message.includes('own invitation')) return { status: 400, error: message }
+    return { status: 400, error: 'The invitation could not be processed. Check the code and accept the connection policy to continue.' }
+  }
   if (message.includes('already been used') || message.includes('cancelled')) return { status: 409, error: 'This invitation is no longer active. Ask your person to share their latest invitation code.' }
   if (message.includes('active couple space') || message.includes('current couple connection')) {
     return { status: 409, error: 'You already have an active couple connection. End it before creating or joining another.' }
@@ -166,11 +169,18 @@ export async function GET() {
     if (error) return NextResponse.json({ error: 'Your connection details are unavailable.' }, { status: 503 })
     const space = Array.isArray(data) ? data[0] ?? null : data
     const { data: relationshipCode } = await supabase.rpc('get_my_relationship_code')
+    let partnerAvatarUrl: string | null = space?.partner_avatar_url ?? null
+    if (partnerAvatarUrl && !partnerAvatarUrl.startsWith('http')) {
+      const { data: avatar } = await createSupabaseAdminClient().storage.from('shuvia-avatars').createSignedUrl(partnerAvatarUrl, 3600)
+      partnerAvatarUrl = avatar?.signedUrl ?? null
+    }
     return NextResponse.json({ space: space ? {
       state: space.state,
       is_owner: space.is_owner,
+      created_at: space.created_at,
       invitation_expires_at: space.invitation_expires_at,
       partner_name: space.partner_name,
+      partner_avatar_url: partnerAvatarUrl,
     } : { state: 'disconnected' }, relationshipCode: relationshipCode ?? null }, { headers: { 'Cache-Control': 'private, no-store' } })
   } catch {
     return NextResponse.json({ error: 'Your connection details are unavailable.' }, { status: 503 })

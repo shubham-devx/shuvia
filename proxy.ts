@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-const privatePaths = ['/onboarding', '/settings', '/space', '/home', '/notes', '/our-days', '/surprises', '/games', '/memories', '/couple', '/app', '/invite', '/join']
+const privatePaths = ['/onboarding', '/settings', '/space', '/home', '/dashboard', '/notes', '/our-days', '/surprises', '/games', '/memories', '/couple', '/app', '/invite', '/join']
 const noIndexPaths = ['/login', '/signup', '/forgot-password', '/reset-password', '/verify-email', '/connect', '/auth/callback']
 
 export async function proxy(request: NextRequest) {
